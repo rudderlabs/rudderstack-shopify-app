@@ -6,6 +6,12 @@ import Shopify, { ApiVersion } from "@shopify/shopify-api";
 import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
+import appContext from "./state/app-state";
+import {
+  registerRudderWebhooks,
+  updateRudderWebhooks,
+  fetchRudderWebhook,
+} from "./service/process";
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -36,16 +42,23 @@ app.prepare().then(async () => {
   server.keys = [Shopify.Context.API_SECRET_KEY];
   server.use(
     createShopifyAuth({
+      accessMode: "offline",
       async afterAuth(ctx) {
         // Access token and shop available in ctx.state.shopify
         const { shop, accessToken, scope } = ctx.state.shopify;
         const host = ctx.query.host;
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
-
+        console.log(`The token is ${accessToken}`);
+        console.log(`app state id ${appContext.id}`);
+        appContext.state.set(shop, {
+          scope,
+          accessToken,
+          client: new Shopify.Clients.Rest(shop, accessToken),
+        });
         const response = await Shopify.Webhooks.Registry.register({
           shop,
           accessToken,
-          path: "/webhooks",
+          path: `/webhooks?shop=${shop}`,
           topic: "APP_UNINSTALLED",
           webhookHandler: async (topic, shop, body) =>
             delete ACTIVE_SHOPIFY_SHOPS[shop],
@@ -85,6 +98,49 @@ app.prepare().then(async () => {
       await Shopify.Utils.graphqlProxy(ctx.req, ctx.res);
     }
   );
+
+  router.get("/register/webhooks", async (ctx) => {
+    verifyRequest({ returnHeader: true });
+    try {
+      const dataplaneUrl = ctx.request.query.url;
+      const shop = ctx.get("shop");
+      registerRudderWebhooks(dataplaneUrl, shop);
+      ctx.res.statusCode = 200;
+    } catch (error) {
+      console.log(`Failed to process webhook registry: ${error}`);
+      ctx.res.statusCode = 500;
+    }
+    return ctx;
+  });
+
+  router.get("/update/webhooks", async (ctx) => {
+    verifyRequest({ returnHeader: true });
+    try {
+      const dataplaneUrl = ctx.request.query.url;
+      const shop = ctx.get("shop");
+      console.log("on update webhooks", dataplaneUrl, shop);
+      updateRudderWebhooks(dataplaneUrl, shop);
+      ctx.res.statusCode = 200;
+    } catch (error) {
+      console.log(`Failed to process webhook updates: ${error}`);
+      ctx.res.statusCode = 500;
+    }
+    return ctx;
+  });
+
+  router.get("/fetch/dataplane", async (ctx) => {
+    verifyRequest({ returnHeader: true });
+    try {
+      const shop = ctx.get("shop");
+      const webhook = await fetchRudderWebhook(shop);
+      ctx.body = webhook;
+      ctx.res.statusCode = 200;
+    } catch (error) {
+      console.log(`Failed to process webhook updates: ${error}`);
+      ctx.res.statusCode = 500;
+    }
+    return ctx;
+  });
 
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
