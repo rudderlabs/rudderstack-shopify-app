@@ -118,7 +118,6 @@ app.prepare().then(async () => {
     try {
       const dataplaneUrl = ctx.request.query.url;
       const shop = ctx.get("shop");
-      console.log("on update webhooks", dataplaneUrl, shop);
       updateRudderWebhooks(dataplaneUrl, shop);
       ctx.res.statusCode = 200;
     } catch (error) {
