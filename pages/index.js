@@ -30,29 +30,37 @@ function Index() {
 
   const handleSubmit = () => {
     // const submittedDataPlaneUrl = event.target[0].value;
-    const submittedDataPlaneUrl = dataplaneURL;
     console.log("[dataplaneURL]", dataplaneURL);
-    let formattedUrl = submittedDataPlaneUrl;
+    let formattedUrl = dataplaneURL;
+    
+    if (formattedUrl === "") {
+      console.log("empty url");
+      return;
+    }
+
     if (formattedUrl.startsWith('http')) {
       const toReplace = formattedUrl.startsWith('https') ? 'https://' : 'http://';
       formattedUrl = formattedUrl.replace(toReplace, '');
     }
     console.log("url from Form Submit: ", formattedUrl);
-    if (isDataPlaneUrlStored) {
-      updateWebHooks(formattedUrl);
-    } else {
-      registerWebHooks(formattedUrl);
-    }
-    // TODO: add callbacks for onSuccess and onError
-    // to handle failures properly
-    setStoredDataPlaneUrl(formattedUrl);
-    setDataPlaneUrl("");
-  };
+    
+    // TODO: show proper notification on success or error
+    const onSuccess = (message) => {
+      setStoredDataPlaneUrl(formattedUrl);
+      setDataPlaneUrl("");
+      console.log(message);
+    };
 
-  // const handleDataPlaneUrlChange = useCallback(
-  //   (value) => setDataPlaneUrl(value),
-  //   []
-  // );
+    const onError = (errMessage) => {
+      console.log(errMessage);
+    };
+
+    if (isDataPlaneUrlStored) {
+      updateWebHooks(formattedUrl, onSuccess, onError);
+    } else {
+      registerWebHooks(formattedUrl, onSuccess, onError);
+    }
+  };
 
   async function fetchRudderWebhook() {
     console.log("inside fetch rudderwebhook");
@@ -78,33 +86,42 @@ function Index() {
     setIsLoaded(true);
   }
 
-  async function updateWebHooks(url) {
-    console.log("url from updateWebhooks: ", url);
-    const token = await getSessionToken(app);
-    const params = new URL(window.location.href).searchParams;
-    const response = await fetch(`/update/webhooks?url=${url}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        shop: `${params.get("shop")}`,
-      },
-      method: "GET",
-    });
-
-    //const response = await aFetch("/api/checkouts");
+  async function updateWebHooks(url, onSuccess, onError) {
+    try {
+      console.log("url from updateWebhooks: ", url);
+      const token = await getSessionToken(app);
+      const params = new URL(window.location.href).searchParams;
+      const response = await fetch(`/update/webhooks?url=${url}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          shop: `${params.get("shop")}`,
+        },
+        method: "GET",
+      });
+      //const response = await aFetch("/api/checkouts");
+      onSuccess("updated webhook successfully");
+    } catch (err) {
+        onError("update webhook failed", err.message);
+    }
   }
 
-  async function registerWebHooks(url) {
-    console.log("url from register webhooks function", url);
-    const token = await getSessionToken(app);
-    const params = new URL(window.location.href).searchParams;
-    const response = await fetch(`/register/webhooks?url=${url}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        shop: `${params.get("shop")}`,
-      },
-      method: "GET",
-    });
-    //const response = await aFetch("/api/checkouts");
+  async function registerWebHooks(url, onSuccess, onError) {
+    try {
+      console.log("url from register webhooks function", url);
+      const token = await getSessionToken(app);
+      const params = new URL(window.location.href).searchParams;
+      const response = await fetch(`/register/webhooks?url=${url}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          shop: `${params.get("shop")}`,
+        },
+        method: "GET",
+      });
+      onSuccess("registered webhook successfully");
+      //const response = await aFetch("/api/checkouts");
+    } catch (err) {
+        onError("resgister webhook failed.", err.message);
+    }
   }
 
   if (!isLoaded) {
