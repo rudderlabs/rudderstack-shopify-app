@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Page,
   Form,
@@ -14,11 +14,11 @@ import { getSessionToken } from "@shopify/app-bridge-utils";
 function Index() {
   const app = useAppBridge();
   //const aFetch = authenticatedFetch(app);
-  const [dataplaneURl, setDataPlaneUrl] = useState("");
+  const [dataplaneURL, setDataPlaneUrl] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
-  const [dataPlaneUrlStored, setDataPlaneStored] = useState(false);
+  const [isDataPlaneUrlStored, setIsDataPlaneStored] = useState(false);
   const [storedDataplaneUrl, setStoredDataPlaneUrl] = useState(
-    "rudderstack-dataplane-url"
+    "<rudderstack-dataplane-url>/v1/webhook?writeKey=<write-key>"
   );
 
   useEffect(() => {
@@ -28,20 +28,31 @@ function Index() {
     asyncFetch();
   }, []);
 
-  const handleSubmit = (event) => {
-    const submittedDataPlaneUrl = event.target[0].value;
-    console.log(dataPlaneUrlStored);
-    if (dataPlaneUrlStored) {
-      updateWebHooks(submittedDataPlaneUrl);
-    } else {
-      registerWebHooks(submittedDataPlaneUrl);
+  const handleSubmit = () => {
+    // const submittedDataPlaneUrl = event.target[0].value;
+    const submittedDataPlaneUrl = dataplaneURL;
+    console.log("[dataplaneURL]", dataplaneURL);
+    let formattedUrl = submittedDataPlaneUrl;
+    if (formattedUrl.startsWith('http')) {
+      const toReplace = formattedUrl.startsWith('https') ? 'https://' : 'http://';
+      formattedUrl = formattedUrl.replace(toReplace, '');
     }
+    console.log("url from Form Submit: ", formattedUrl);
+    if (isDataPlaneUrlStored) {
+      updateWebHooks(formattedUrl);
+    } else {
+      registerWebHooks(formattedUrl);
+    }
+    // TODO: add callbacks for onSuccess and onError
+    // to handle failures properly
+    setStoredDataPlaneUrl(formattedUrl);
+    setDataPlaneUrl("");
   };
 
-  const handleDataPlaneUrlChange = useCallback(
-    (value) => setDataPlaneUrl(value),
-    []
-  );
+  // const handleDataPlaneUrlChange = useCallback(
+  //   (value) => setDataPlaneUrl(value),
+  //   []
+  // );
 
   async function fetchRudderWebhook() {
     console.log("inside fetch rudderwebhook");
@@ -62,12 +73,13 @@ function Index() {
       storedDPUrl.searchParams.delete("signature");
       storedDPUrl.searchParams.delete("topic");
       setStoredDataPlaneUrl(storedDPUrl.href);
-      setDataPlaneStored(true);
+      setIsDataPlaneStored(true);
     }
     setIsLoaded(true);
   }
 
   async function updateWebHooks(url) {
+    console.log("url from updateWebhooks: ", url);
     const token = await getSessionToken(app);
     const params = new URL(window.location.href).searchParams;
     const response = await fetch(`/update/webhooks?url=${url}`, {
@@ -82,6 +94,7 @@ function Index() {
   }
 
   async function registerWebHooks(url) {
+    console.log("url from register webhooks function", url);
     const token = await getSessionToken(app);
     const params = new URL(window.location.href).searchParams;
     const response = await fetch(`/register/webhooks?url=${url}`, {
@@ -108,8 +121,8 @@ function Index() {
       <Form onSubmit={handleSubmit}>
         <FormLayout>
           <TextField
-            value={dataplaneURl}
-            onChange={handleDataPlaneUrlChange}
+            value={dataplaneURL}
+            onChange={(value) => setDataPlaneUrl(value)}
             label="Rudderstack Data Plane URL"
             type="text"
             placeholder={storedDataplaneUrl}
@@ -119,7 +132,7 @@ function Index() {
               </span>
             }
           />
-          <Button submit>{dataPlaneUrlStored ? "Update" : "Submit"}</Button>
+          <Button submit>{isDataPlaneUrlStored ? "Update" : "Submit"}</Button>
         </FormLayout>
       </Form>
     </Page>
