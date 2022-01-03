@@ -40,11 +40,6 @@ function Index() {
     // const submittedDataPlaneUrl = event.target[0].value;
     console.log("[dataplaneURL]", dataplaneURL);
     let formattedUrl = dataplaneURL;
-    
-    if (formattedUrl === "") {
-      showNotification("Empty DataPlane URL");
-      return;
-    }
 
     if (formattedUrl.startsWith('http')) {
       const toReplace = formattedUrl.startsWith('https') ? 'https://' : 'http://';
@@ -52,7 +47,6 @@ function Index() {
     }
     console.log("url from Form Submit: ", formattedUrl);
     
-    // TODO: show proper notification on success or error
     const onSuccess = (message) => {
       setStoredDataPlaneUrl(formattedUrl);
       setDataPlaneUrl("");
@@ -125,7 +119,10 @@ function Index() {
               </span>
             }
           />
-          <Button submit>{isDataPlaneUrlStored ? "Update" : "Submit"}</Button>
+          <Button 
+            disabled={dataplaneURL === ""}
+            submit
+          >{isDataPlaneUrlStored ? "Update" : "Submit"}</Button>
         </FormLayout>
       </Form>
       <Frame>
