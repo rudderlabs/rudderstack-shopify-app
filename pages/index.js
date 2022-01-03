@@ -7,9 +7,11 @@ import {
   Button,
   Frame,
   Loading,
+  Toast
 } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { getSessionToken } from "@shopify/app-bridge-utils";
+import { updateWebHooks, registerWebHooks } from "./utils";
 
 function Index() {
   const app = useAppBridge();
@@ -20,6 +22,12 @@ function Index() {
   const [storedDataplaneUrl, setStoredDataPlaneUrl] = useState(
     "<rudderstack-dataplane-url>/v1/webhook?writeKey=<write-key>"
   );
+  const [notificationActive, setNotificationActive] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const showNotification = (message) => {
+    setNotificationActive(true);
+    setNotificationMessage(message);
+  };
 
   useEffect(() => {
     const asyncFetch = async () => {
@@ -28,13 +36,13 @@ function Index() {
     asyncFetch();
   }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // const submittedDataPlaneUrl = event.target[0].value;
     console.log("[dataplaneURL]", dataplaneURL);
     let formattedUrl = dataplaneURL;
     
     if (formattedUrl === "") {
-      console.log("empty url");
+      showNotification("Empty DataPlane URL");
       return;
     }
 
@@ -49,16 +57,22 @@ function Index() {
       setStoredDataPlaneUrl(formattedUrl);
       setDataPlaneUrl("");
       console.log(message);
+      showNotification(message);
     };
 
     const onError = (errMessage) => {
       console.log(errMessage);
+      showNotification(errMessage);
     };
 
+
+    // TODO: should session token be stored in state on app component mount?
+    const token = await getSessionToken(app);
+    console.log("token fetched", token);
     if (isDataPlaneUrlStored) {
-      updateWebHooks(formattedUrl, onSuccess, onError);
+      updateWebHooks(formattedUrl, token, onSuccess, onError);
     } else {
-      registerWebHooks(formattedUrl, onSuccess, onError);
+      registerWebHooks(formattedUrl, token, onSuccess, onError);
     }
   };
 
@@ -84,44 +98,6 @@ function Index() {
       setIsDataPlaneStored(true);
     }
     setIsLoaded(true);
-  }
-
-  async function updateWebHooks(url, onSuccess, onError) {
-    try {
-      console.log("url from updateWebhooks: ", url);
-      const token = await getSessionToken(app);
-      const params = new URL(window.location.href).searchParams;
-      const response = await fetch(`/update/webhooks?url=${url}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          shop: `${params.get("shop")}`,
-        },
-        method: "GET",
-      });
-      //const response = await aFetch("/api/checkouts");
-      onSuccess("updated webhook successfully");
-    } catch (err) {
-        onError("update webhook failed", err.message);
-    }
-  }
-
-  async function registerWebHooks(url, onSuccess, onError) {
-    try {
-      console.log("url from register webhooks function", url);
-      const token = await getSessionToken(app);
-      const params = new URL(window.location.href).searchParams;
-      const response = await fetch(`/register/webhooks?url=${url}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          shop: `${params.get("shop")}`,
-        },
-        method: "GET",
-      });
-      onSuccess("registered webhook successfully");
-      //const response = await aFetch("/api/checkouts");
-    } catch (err) {
-        onError("resgister webhook failed.", err.message);
-    }
   }
 
   if (!isLoaded) {
@@ -152,6 +128,13 @@ function Index() {
           <Button submit>{isDataPlaneUrlStored ? "Update" : "Submit"}</Button>
         </FormLayout>
       </Form>
+      <Frame>
+        {
+          notificationActive
+          && 
+          <Toast content={notificationMessage} onDismiss={() => setNotificationActive(false)} />
+        }
+      </Frame>
     </Page>
   );
 }
