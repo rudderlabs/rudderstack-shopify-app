@@ -11,7 +11,12 @@ import {
 } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { getSessionToken } from "@shopify/app-bridge-utils";
-import { updateWebHooks, registerWebHooks, fetchRudderWebhook, formatInputs } from "./utils";
+import {
+  updateWebHooks,
+  registerWebHooks,
+  fetchRudderWebhook,
+  formatInputs,
+} from "./utils";
 
 function Index() {
   const app = useAppBridge();
@@ -23,9 +28,33 @@ function Index() {
   const [currentWriteKey, setCurrentWriteKey] = useState("");
   const [notificationActive, setNotificationActive] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
+  const [storedWriteKey, setStoredWritekey] = useState("");
+  const [storedDataPlane, setStoredDataPlane] = useState("");
   const showNotification = (message) => {
     setNotificationActive(true);
     setNotificationMessage(message);
+  };
+
+  const performUpdates = (url, writeKey) => {
+    setCurrentDataPlaneUrl(url);
+    setCurrentWriteKey(writeKey);
+    setStoredDataPlane(url);
+    setStoredWritekey(writeKey);
+  };
+
+  const disableOrEnableButton = () => {
+    const [formattedDataPlane, formattedWriteKey] 
+      = formatInputs(currentDataplaneURL, currentWriteKey);
+    return (
+      isLoading ||
+      isSubmitting ||
+      currentDataplaneURL === "" ||
+      currentWriteKey === "" ||
+      (
+        formattedWriteKey === storedWriteKey &&
+        formattedDataPlane === storedDataPlane
+      )
+    );
   };
 
   useEffect(() => {
@@ -34,8 +63,11 @@ function Index() {
       await fetchRudderWebhook(
         token,
         (storedDPUrl, savedWriteKey) => {
-          setCurrentDataPlaneUrl(storedDPUrl);
-          setCurrentWriteKey(savedWriteKey);
+          // setCurrentDataPlaneUrl(storedDPUrl);
+          // setCurrentWriteKey(savedWriteKey);
+          // setStoredWritekey(savedWriteKey);
+          // setStoredDataPlane(storedDPUrl);
+          performUpdates(storedDPUrl, savedWriteKey);
           setIsConfigPresent(true);
           console.log("[onSuccess] isConfigPresent ", isConfigPresent);
         },
@@ -55,15 +87,19 @@ function Index() {
     setIsSubmitting(false);
     console.log("[dataplaneURL]", currentDataplaneURL);
 
-    const [formattedUrl, formattedWriteKey] = formatInputs(currentDataplaneURL, currentWriteKey);
+    const [formattedUrl, formattedWriteKey] = formatInputs(
+      currentDataplaneURL,
+      currentWriteKey
+    );
     const rudderSourceWebhook = `${formattedUrl}/v1/webhook?writeKey=${currentWriteKey}`;
-    
+
     console.log("formatted url from Form: ", formattedUrl);
     console.log("rudder source webhook: ", rudderSourceWebhook);
 
     const onSuccess = (message) => {
-      setCurrentDataPlaneUrl(formattedUrl);
-      setCurrentWriteKey(formattedWriteKey);
+      // setCurrentDataPlaneUrl(formattedUrl);
+      // setCurrentWriteKey(formattedWriteKey);
+      performUpdates(formattedUrl, formattedWriteKey);
       setIsConfigPresent(true);
       console.log(message);
       showNotification(message);
@@ -94,7 +130,6 @@ function Index() {
       </Frame>
     );
   }
-  console.log("[down] isConfigPresent ", isConfigPresent);
 
   return (
     <Page>
@@ -125,12 +160,7 @@ function Index() {
             }
           />
           <Button
-            disabled={
-              isLoading ||
-              isSubmitting ||
-              currentDataplaneURL === "" ||
-              currentWriteKey === ""
-            }
+            disabled={disableOrEnableButton()}
             submit
           >
             {isConfigPresent ? "Update" : "Submit"}
