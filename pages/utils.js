@@ -33,3 +33,31 @@ export const registerWebHooks = async (url, token, onSuccess, onError) => {
     onError(`Register webhook Failed. ${err.message}`);
   }
 };
+
+
+export const fetchRudderWebhook = async (token, onError) => {
+  try {
+    console.log("inside fetch rudderwebhook");
+    console.log(`The session token is: ${token}`);
+    const params = new URL(window.location.href).searchParams;
+    const response = await fetch(`/fetch/dataplane`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        shop: `${params.get("shop")}`,
+      },
+      method: "GET",
+    });
+    const webhook = await response.json();
+    if (webhook && webhook.address) {
+      const storedDPUrl = new URL(webhook.address);
+      storedDPUrl.searchParams.delete("shop");
+      storedDPUrl.searchParams.delete("signature");
+      storedDPUrl.searchParams.delete("topic");
+      setStoredDataPlaneUrl(storedDPUrl.href);
+      setIsDataPlaneStored(true);
+    }
+    setIsLoaded(true);
+  } catch (err) {
+    onError(err.message);
+  }
+}

@@ -11,7 +11,7 @@ import {
 } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { getSessionToken } from "@shopify/app-bridge-utils";
-import { updateWebHooks, registerWebHooks } from "./utils";
+import { updateWebHooks, registerWebHooks, fetchRudderWebhook } from "./utils";
 
 function Index() {
   const app = useAppBridge();
@@ -31,7 +31,11 @@ function Index() {
 
   useEffect(() => {
     const asyncFetch = async () => {
-      await fetchRudderWebhook();
+      const token = await getSessionToken(app);
+      await fetchRudderWebhook(token, (errMessage) => {
+        showNotification(errMessage);
+        setIsLoaded(true);
+      });
     };
     asyncFetch();
   }, []);
@@ -70,37 +74,35 @@ function Index() {
     }
   };
 
-  async function fetchRudderWebhook() {
-    console.log("inside fetch rudderwebhook");
-    const token = await getSessionToken(app);
-    console.log(`The session token is: ${token}`);
-    const params = new URL(window.location.href).searchParams;
-    const response = await fetch(`/fetch/dataplane`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        shop: `${params.get("shop")}`,
-      },
-      method: "GET",
-    });
-    const webhook = await response.json();
-    if (webhook && webhook.address) {
-      const storedDPUrl = new URL(webhook.address);
-      storedDPUrl.searchParams.delete("shop");
-      storedDPUrl.searchParams.delete("signature");
-      storedDPUrl.searchParams.delete("topic");
-      setStoredDataPlaneUrl(storedDPUrl.href);
-      setIsDataPlaneStored(true);
-    }
-    setIsLoaded(true);
-  }
+  // async function fetchRudderWebhook() {
+  //   console.log("inside fetch rudderwebhook");
+  //   const token = await getSessionToken(app);
+  //   console.log(`The session token is: ${token}`);
+  //   const params = new URL(window.location.href).searchParams;
+  //   const response = await fetch(`/fetch/dataplane`, {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //       shop: `${params.get("shop")}`,
+  //     },
+  //     method: "GET",
+  //   });
+  //   const webhook = await response.json();
+  //   if (webhook && webhook.address) {
+  //     const storedDPUrl = new URL(webhook.address);
+  //     storedDPUrl.searchParams.delete("shop");
+  //     storedDPUrl.searchParams.delete("signature");
+  //     storedDPUrl.searchParams.delete("topic");
+  //     setStoredDataPlaneUrl(storedDPUrl.href);
+  //     setIsDataPlaneStored(true);
+  //   }
+  //   setIsLoaded(true);
+  // }
 
   if (!isLoaded) {
     return (
-      <div style={{ height: "100px" }}>
-        <Frame>
-          <Loading />
-        </Frame>
-      </div>
+      <Frame>
+        <Loading />
+      </Frame>
     );
   }
   return (
