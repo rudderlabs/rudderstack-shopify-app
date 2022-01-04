@@ -21,7 +21,7 @@ const app = next({
 });
 const handle = app.getRequestHandler();
 
-const DEFAULT_SCOPES = [
+const REQUIRED_SCOPES = [
   "write_products",
   "write_customers",
   "write_draft_orders",
@@ -30,13 +30,13 @@ const DEFAULT_SCOPES = [
   "read_orders",
   "write_orders",
   "read_fulfillments",
-  "write_fulfillments"
+  "write_fulfillments",
 ];
 
 Shopify.Context.initialize({
   API_KEY: process.env.SHOPIFY_API_KEY,
   API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,
-  SCOPES: process.env.SCOPES.split(",") || DEFAULT_SCOPES,
+  SCOPES: REQUIRED_SCOPES,
   HOST_NAME: process.env.HOST.replace(/https:\/\/|\/$/g, ""),
   API_VERSION: ApiVersion.October20,
   IS_EMBEDDED_APP: true,

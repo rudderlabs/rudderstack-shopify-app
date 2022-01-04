@@ -2,7 +2,7 @@ export const topicMapping = {
  
     carts_create: "carts/create",
     carts_update: "carts/update",
-  
+
 
     checkouts_create: "checkouts/create",
     checkouts_delete: "checkouts/delete",

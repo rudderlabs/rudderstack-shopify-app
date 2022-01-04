@@ -1,4 +1,3 @@
-import appState from "../state/app-state";
 import {
   getTopicMapping,
   registerWebhooks,
