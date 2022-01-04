@@ -32,10 +32,13 @@ function Index() {
   useEffect(() => {
     const asyncFetch = async () => {
       const token = await getSessionToken(app);
-      await fetchRudderWebhook(token, (errMessage) => {
+      await fetchRudderWebhook(token, (storedDPUrl) => {
+        setStoredDataPlaneUrl(storedDPUrl.href);
+        setIsDataPlaneStored(true);
+      }, (errMessage) => {
         showNotification(errMessage);
-        setIsLoaded(true);
       });
+      setIsLoaded(true);
     };
     asyncFetch();
   }, []);

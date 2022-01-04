@@ -34,8 +34,7 @@ export const registerWebHooks = async (url, token, onSuccess, onError) => {
   }
 };
 
-
-export const fetchRudderWebhook = async (token, onError) => {
+export const fetchRudderWebhook = async (token, onSuccess, onError) => {
   try {
     console.log("inside fetch rudderwebhook");
     console.log(`The session token is: ${token}`);
@@ -48,15 +47,14 @@ export const fetchRudderWebhook = async (token, onError) => {
       method: "GET",
     });
     const webhook = await response.json();
+    console.log("[fetchRudderWebhook] webhook", webhook);
     if (webhook && webhook.address) {
       const storedDPUrl = new URL(webhook.address);
       storedDPUrl.searchParams.delete("shop");
       storedDPUrl.searchParams.delete("signature");
       storedDPUrl.searchParams.delete("topic");
-      setStoredDataPlaneUrl(storedDPUrl.href);
-      setIsDataPlaneStored(true);
+      onSuccess(storedDPUrl);
     }
-    setIsLoaded(true);
   } catch (err) {
     onError(err.message);
   }

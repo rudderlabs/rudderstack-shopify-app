@@ -93,6 +93,7 @@ export const updateRudderWebhooks = async (dataPlaneUrl, shop) => {
   webhookUrl = embedRudderSignatureInUrl(dataPlaneUrl);
   webhookUrl = embedShopSignatureInUrl(webhookUrl, shop);
   const registeredWebhooks = await fetchWebhooks(shop);
+  console.log("REGISTERED WEBHOOKS", registeredWebhooks);
   const rudderWebhookItems = filterRudderWebhooksByIdAndTopic(
     registeredWebhooks,
     shop
@@ -114,15 +115,15 @@ export const updateRudderWebhooks = async (dataPlaneUrl, shop) => {
  * @param {*} dataPlaneUrl
  * @param {*} shop
  */
-export const registerRudderWebhooks = (dataPlaneUrl, shop) => {
+export const registerRudderWebhooks = async (dataPlaneUrl, shop) => {
   let webhookUrl;
   webhookUrl = embedRudderSignatureInUrl(dataPlaneUrl);
   webhookUrl = embedShopSignatureInUrl(webhookUrl, shop);
   const topics = getTopicMapping();
-  for (const [topicKey, topicValue] of Object.entries(topics)) {
+  await Promise.all(Object.entries(topics).map(async ([topicKey, topicValue]) => {
     const finalWebhookUrl = embedTopicInUrl(webhookUrl, `${topicKey}`).href;
-    registerWebhooks(finalWebhookUrl, topicValue, shop);
-  }
+    await registerWebhooks(finalWebhookUrl, topicValue, shop);
+  }));
 };
 
 /**
@@ -133,6 +134,7 @@ export const registerRudderWebhooks = (dataPlaneUrl, shop) => {
 export const fetchRudderWebhook = async (shop) => {
   let rudderWebhook = {};
   const registeredWebhooks = await fetchWebhooks(shop);
+  console.log("All Registered webhooks", registeredWebhooks);
   registeredWebhooks.some((webhook) => {
     if (validateRudderWebhookByShop(webhook, shop)) {
       rudderWebhook = webhook;

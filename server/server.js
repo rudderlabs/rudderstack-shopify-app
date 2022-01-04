@@ -21,10 +21,20 @@ const app = next({
 });
 const handle = app.getRequestHandler();
 
+const DEFAULT_SCOPES = [
+  "write_products",
+  "write_customers",
+  "write_draft_orders",
+  "read_checkouts",
+  "write_checkouts",
+  "read_orders",
+  "write_orders"
+];
+
 Shopify.Context.initialize({
   API_KEY: process.env.SHOPIFY_API_KEY,
   API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,
-  SCOPES: process.env.SCOPES.split(","),
+  SCOPES: process.env.SCOPES.split(",") || DEFAULT_SCOPES,
   HOST_NAME: process.env.HOST.replace(/https:\/\/|\/$/g, ""),
   API_VERSION: ApiVersion.October20,
   IS_EMBEDDED_APP: true,
@@ -104,7 +114,7 @@ app.prepare().then(async () => {
     try {
       const dataplaneUrl = ctx.request.query.url;
       const shop = ctx.get("shop");
-      registerRudderWebhooks(dataplaneUrl, shop);
+      await registerRudderWebhooks(dataplaneUrl, shop);
       ctx.res.statusCode = 200;
     } catch (error) {
       console.log(`Failed to process webhook registry: ${error}`);

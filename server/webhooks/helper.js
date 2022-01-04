@@ -28,6 +28,7 @@ export const getTopicMapping = () => {
  */
 export const registerWebhooks = async (webhookUrl, topic, shop) => {
   try {
+    // console.log("[registerWebhooks] AppContext", appContext);
     const shopContext = appContext.state.get(shop);
     const client = shopContext.client;
     const webhookToSubscribe = {
@@ -35,6 +36,7 @@ export const registerWebhooks = async (webhookUrl, topic, shop) => {
       address: `${webhookUrl}`,
       format: "json",
     };
+    console.log("[registerWebhooks] topic, webhookUrl ", topic, webhookUrl);
     const response = await client.post({
       path: "webhooks",
       data: {
@@ -42,6 +44,8 @@ export const registerWebhooks = async (webhookUrl, topic, shop) => {
       },
       type: DataType.JSON,
     });
+
+    console.log("[registerWebhooks] topic, webhookUrl DONE ", topic, webhookUrl);
   } catch (error) {
     console.log(
       `Failed to register webhook - ${webhookUrl}, topic - ${topic} shop - ${shop}: Error ${error}`
@@ -56,6 +60,7 @@ export const registerWebhooks = async (webhookUrl, topic, shop) => {
  */
 export const updateWebhooks = async (webhookId, webhookUrl, shop) => {
   try {
+    console.log("[updateWebhooks] AppContext", appContext);
     const shopContext = appContext.state.get(shop);
     const client = shopContext.client;
     const webhookToUpdate = {
@@ -83,6 +88,7 @@ export const updateWebhooks = async (webhookId, webhookUrl, shop) => {
 export const fetchWebhooks = async (shop) => {
   let webhooks;
   try {
+    console.log("[fetchWebhooks] AppContext", appContext);
     const shopContext = appContext.state.get(shop);
     const client = shopContext.client;
     const response = await client.get({
@@ -105,6 +111,7 @@ export const fetchWebhooks = async (shop) => {
  * @param {*} webhookIds
  */
 export const removeWebhooks = async (webhookId, shop) => {
+  console.log("[removeWebhooks] AppContext", appContext);
   const shopContext = appContext.state.get(shop);
   const client = shopContext.client;
   try {
