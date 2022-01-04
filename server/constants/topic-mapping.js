@@ -21,8 +21,8 @@ export const topicMapping = {
     customers_update: "customers/update",
   
   
-    fulfillment_events_create: "fulfillment_events/create",
-    fulfillment_events_delete: "fulfillment_events/delete",
+    // fulfillment_events_create: "fulfillment_events/create",
+    // fulfillment_events_delete: "fulfillment_events/delete",
   
   
     fulfillments_create: "fulfillments/create",

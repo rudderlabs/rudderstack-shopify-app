@@ -7,21 +7,20 @@ import {
   Button,
   Frame,
   Loading,
-  Toast
+  Toast,
 } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { getSessionToken } from "@shopify/app-bridge-utils";
-import { updateWebHooks, registerWebHooks, fetchRudderWebhook } from "./utils";
+import { updateWebHooks, registerWebHooks, fetchRudderWebhook, formatInputs } from "./utils";
 
 function Index() {
   const app = useAppBridge();
   //const aFetch = authenticatedFetch(app);
-  const [dataplaneURL, setDataPlaneUrl] = useState("");
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isDataPlaneUrlStored, setIsDataPlaneStored] = useState(false);
-  const [storedDataplaneUrl, setStoredDataPlaneUrl] = useState(
-    "<rudderstack-dataplane-url>/v1/webhook?writeKey=<write-key>"
-  );
+  const [currentDataplaneURL, setCurrentDataPlaneUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConfigPresent, setIsConfigPresent] = useState(false);
+  const [currentWriteKey, setCurrentWriteKey] = useState("");
   const [notificationActive, setNotificationActive] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const showNotification = (message) => {
@@ -32,110 +31,119 @@ function Index() {
   useEffect(() => {
     const asyncFetch = async () => {
       const token = await getSessionToken(app);
-      await fetchRudderWebhook(token, (storedDPUrl) => {
-        setStoredDataPlaneUrl(storedDPUrl.href);
-        setIsDataPlaneStored(true);
-      }, (errMessage) => {
-        showNotification(errMessage);
-      });
-      setIsLoaded(true);
+      await fetchRudderWebhook(
+        token,
+        (storedDPUrl, savedWriteKey) => {
+          setCurrentDataPlaneUrl(storedDPUrl);
+          setCurrentWriteKey(savedWriteKey);
+          setIsConfigPresent(true);
+          console.log("[onSuccess] isConfigPresent ", isConfigPresent);
+        },
+        (errMessage) => {
+          showNotification(errMessage);
+          console.log("[onError] isConfigPresent ", isConfigPresent);
+        }
+      );
+      console.log("isConfigPresent ", isConfigPresent);
+      setIsLoading(false);
     };
     asyncFetch();
   }, []);
 
   const handleSubmit = async () => {
     // const submittedDataPlaneUrl = event.target[0].value;
-    console.log("[dataplaneURL]", dataplaneURL);
-    let formattedUrl = dataplaneURL;
+    setIsSubmitting(false);
+    console.log("[dataplaneURL]", currentDataplaneURL);
 
-    if (formattedUrl.startsWith('http')) {
-      const toReplace = formattedUrl.startsWith('https') ? 'https://' : 'http://';
-      formattedUrl = formattedUrl.replace(toReplace, '');
-    }
-    console.log("url from Form Submit: ", formattedUrl);
+    const [formattedUrl, formattedWriteKey] = formatInputs(currentDataplaneURL, currentWriteKey);
+    const rudderSourceWebhook = `${formattedUrl}/v1/webhook?writeKey=${currentWriteKey}`;
     
+    console.log("formatted url from Form: ", formattedUrl);
+    console.log("rudder source webhook: ", rudderSourceWebhook);
+
     const onSuccess = (message) => {
-      setStoredDataPlaneUrl(formattedUrl);
-      setDataPlaneUrl("");
+      setCurrentDataPlaneUrl(formattedUrl);
+      setCurrentWriteKey(formattedWriteKey);
+      setIsConfigPresent(true);
       console.log(message);
       showNotification(message);
+      setIsSubmitting(false);
     };
 
     const onError = (errMessage) => {
       console.log(errMessage);
       showNotification(errMessage);
+      setIsSubmitting(false);
     };
 
-
     // TODO: should session token be stored in state on app component mount?
+    // token seems to be rotated every 60 seconds.
     const token = await getSessionToken(app);
     console.log("token fetched", token);
-    if (isDataPlaneUrlStored) {
-      updateWebHooks(formattedUrl, token, onSuccess, onError);
+    if (isConfigPresent) {
+      updateWebHooks(rudderSourceWebhook, token, onSuccess, onError);
     } else {
-      registerWebHooks(formattedUrl, token, onSuccess, onError);
+      registerWebHooks(rudderSourceWebhook, token, onSuccess, onError);
     }
   };
 
-  // async function fetchRudderWebhook() {
-  //   console.log("inside fetch rudderwebhook");
-  //   const token = await getSessionToken(app);
-  //   console.log(`The session token is: ${token}`);
-  //   const params = new URL(window.location.href).searchParams;
-  //   const response = await fetch(`/fetch/dataplane`, {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //       shop: `${params.get("shop")}`,
-  //     },
-  //     method: "GET",
-  //   });
-  //   const webhook = await response.json();
-  //   if (webhook && webhook.address) {
-  //     const storedDPUrl = new URL(webhook.address);
-  //     storedDPUrl.searchParams.delete("shop");
-  //     storedDPUrl.searchParams.delete("signature");
-  //     storedDPUrl.searchParams.delete("topic");
-  //     setStoredDataPlaneUrl(storedDPUrl.href);
-  //     setIsDataPlaneStored(true);
-  //   }
-  //   setIsLoaded(true);
-  // }
-
-  if (!isLoaded) {
+  if (isLoading) {
     return (
       <Frame>
         <Loading />
       </Frame>
     );
   }
+  console.log("[down] isConfigPresent ", isConfigPresent);
+
   return (
     <Page>
       <Form onSubmit={handleSubmit}>
         <FormLayout>
           <TextField
-            value={dataplaneURL}
-            onChange={(value) => setDataPlaneUrl(value)}
+            value={currentDataplaneURL}
+            onChange={(value) => setCurrentDataPlaneUrl(value)}
             label="Rudderstack Data Plane URL"
             type="text"
-            placeholder={storedDataplaneUrl}
+            placeholder="Data Plane URL"
             helpText={
               <span>
                 The Dataplane URL to which Shopify Events will be forwarded
               </span>
             }
           />
-          <Button 
-            disabled={dataplaneURL === ""}
+          <TextField
+            value={currentWriteKey}
+            onChange={(value) => setCurrentWriteKey(value)}
+            label="Source WriteKey"
+            type="text"
+            placeholder="writekey"
+            helpText={
+              <span>
+                WriteKey for the Source created on RudderStack Dashboard
+              </span>
+            }
+          />
+          <Button
+            disabled={
+              isLoading ||
+              isSubmitting ||
+              currentDataplaneURL === "" ||
+              currentWriteKey === ""
+            }
             submit
-          >{isDataPlaneUrlStored ? "Update" : "Submit"}</Button>
+          >
+            {isConfigPresent ? "Update" : "Submit"}
+          </Button>
         </FormLayout>
       </Form>
       <Frame>
-        {
-          notificationActive
-          && 
-          <Toast content={notificationMessage} onDismiss={() => setNotificationActive(false)} />
-        }
+        {notificationActive && (
+          <Toast
+            content={notificationMessage}
+            onDismiss={() => setNotificationActive(false)}
+          />
+        )}
       </Frame>
     </Page>
   );

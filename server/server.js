@@ -28,7 +28,9 @@ const DEFAULT_SCOPES = [
   "read_checkouts",
   "write_checkouts",
   "read_orders",
-  "write_orders"
+  "write_orders",
+  "read_fulfillments",
+  "write_fulfillments"
 ];
 
 Shopify.Context.initialize({

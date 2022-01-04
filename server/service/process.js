@@ -8,10 +8,10 @@ import {
 } from "../webhooks/helper";
 
 const embedRudderSignatureInUrl = (url) => {
-  // if (url.indexOf("http://") == -1 || url.indexOf("https://") == -1) {
-  //   url = `https://${url}`;
+  let formattedUrl = url;
+  // if (!(url.startsWith('http://') || url.startsWith('https://'))) {
+  //   formattedUrl = `https://${url}`;
   // }
-  const formattedUrl = `https://${url}`;
   const signedUrl = new URL(formattedUrl);
   signedUrl.searchParams.set("signature", "rudderstack");
   return signedUrl;
