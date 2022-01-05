@@ -26,7 +26,7 @@ export const topicMapping = {
   
   
     fulfillments_create: "fulfillments/create",
-    fulfillments_delete: "fulfillments/update",
+    fulfillments_update: "fulfillments/update",
   
 
 
