@@ -2,7 +2,7 @@ import "@babel/polyfill";
 import dotenv from "dotenv";
 import "isomorphic-fetch";
 import createShopifyAuth, { verifyRequest } from "@shopify/koa-shopify-auth";
-import Shopify, { ApiVersion } from "@shopify/shopify-api";
+import Shopify, { ApiVersion, DataType } from "@shopify/shopify-api";
 import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
@@ -12,7 +12,6 @@ import {
   updateRudderWebhooks,
   fetchRudderWebhook,
 } from "./service/process";
-import Shopify, { DataType } from '@shopify/shopify-api';
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
