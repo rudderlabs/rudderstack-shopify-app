@@ -5,7 +5,7 @@
  * @param {*} onSuccess 
  * @param {*} onError 
  */
-export const updateWebHooks = async (url, token, onSuccess, onError) => {
+ export const updateWebHooks = async (url, token, onSuccess, onError) => {
   try {
     console.log("url from updateWebhooks: ", url);
     const params = new URL(window.location.href).searchParams;

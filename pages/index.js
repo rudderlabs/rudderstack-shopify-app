@@ -16,7 +16,7 @@ import {
   registerWebHooks,
   fetchRudderWebhook,
   formatInputs,
-} from "./utils";
+} from "../util/utils";
 
 function Index() {
   const app = useAppBridge();
