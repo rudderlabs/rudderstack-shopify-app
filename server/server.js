@@ -12,6 +12,7 @@ import {
   updateRudderWebhooks,
   fetchRudderWebhook,
 } from "./service/process";
+import Shopify, { DataType } from '@shopify/shopify-api';
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -131,6 +132,18 @@ app.prepare().then(async () => {
       const dataplaneUrl = ctx.request.query.url;
       const shop = ctx.get("shop");
       updateRudderWebhooks(dataplaneUrl, shop);
+
+      // script loading
+      const accessToken = ctx.request.header.authorization;
+      console.log("***ACESSTOKEN***", accessToken);
+      const client = new Shopify.Clients.Rest('rudderstack-store-alt.myshopify.com', accessToken);
+      const data = await client.post({
+        path: 'script_tags',
+        data: {"script_tag":{"event":"onload","src":"https:\/\/cdn.rudderlabs.com\/v1\/rudder-analytics.min.js"}},
+        type: DataType.JSON,
+      });
+      console.log("***SCRIPTS ENDPOINT CALLED***");
+
       ctx.res.statusCode = 200;
     } catch (error) {
       console.log(`Failed to process webhook updates: ${error}`);
