@@ -27,15 +27,14 @@ export const getTopicMapping = () => {
  * Registers webhook subscriptions to a the specified webhook url
  * @param {*} webhookUrl
  */
-export const registerWebhooks = async (webhookUrl, topic, shop) => {
+export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => {
   try {
     // console.log("[registerWebhooks] AppContext", appContext);
 
-
-    const shopContext = appContext.state.get(shop);
-    const client = shopContext.client;
+    // const shopContext = appContext.state.get(shop);
+    // const client = shopContext.client;
     
-    // const client = new Shopify.Clients.Rest(shop, accessToken);
+    const client = new Shopify.Clients.Rest(shop, accessToken);
     const webhookToSubscribe = {
       topic: `${topic}`,
       address: `${webhookUrl}`,
@@ -49,11 +48,9 @@ export const registerWebhooks = async (webhookUrl, topic, shop) => {
       },
       type: DataType.JSON,
     });
-    
-    const { webhook } = response.body;
-    await dbUtils.upsertIntoTable(dbClient, shop, accessToken);
-
     console.log("[registerWebhooks] topic, webhookUrl DONE ", topic, webhookUrl);
+    console.log("RESPONSE", JSON.stringify(response.body));
+    return response.body.webhook.id;
   } catch (error) {
     console.log(
       `Failed to register webhook - ${webhookUrl}, topic - ${topic} shop - ${shop}: Error ${error}`

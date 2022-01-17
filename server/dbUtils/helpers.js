@@ -29,7 +29,7 @@ const getConfigByShop = async (dbClient, shop) => {
   return rows;
 };
 
-const upsertIntoTable = async (dbClient, shop, accessToken, webhookIdList, addToList=false) => {
+const upsertIntoTable = async (dbClient, shop, accessToken, webhookIdList, dataPlaneUrl) => {
   if (!dbClient) {
     throw new Error("DB client not found");
   }
@@ -39,13 +39,8 @@ const upsertIntoTable = async (dbClient, shop, accessToken, webhookIdList, addTo
   let query;
   const configToSave = {
     accessToken,
-  }
-  
-  if (addToList) {
-    configToSave.webhook_ids = 
-      webhookIdList ? webhookIdList.concat(...webhookIdList) : []
-  } else {
-    configToSave.webhook_ids = [];
+    dataPlaneUrl,
+    webhook_ids: webhookIdList || [],
   }
 
   if (rows.length !== 0) {

@@ -5,6 +5,8 @@ import {
   removeWebhooks,
   updateWebhooks,
 } from "../webhooks/helper";
+import appContext from "../state/app-state";
+import { dbUtils } from "../dbUtils/helpers";
 
 const embedRudderSignatureInUrl = (url) => {
   let formattedUrl = url;
@@ -119,10 +121,23 @@ export const registerRudderWebhooks = async (dataPlaneUrl, shop) => {
   webhookUrl = embedRudderSignatureInUrl(dataPlaneUrl);
   webhookUrl = embedShopSignatureInUrl(webhookUrl, shop);
   const topics = getTopicMapping();
+  
+  const webhook_ids = [];
+  // fetch accessToken from DB
+  const dbClient = appContext.getDbClient();
+  const rows = await dbUtils.getConfigByShop(dbClient, shop);
+  const { config } = rows[0];
+  
   await Promise.all(Object.entries(topics).map(async ([topicKey, topicValue]) => {
     const finalWebhookUrl = embedTopicInUrl(webhookUrl, `${topicKey}`).href;
-    await registerWebhooks(finalWebhookUrl, topicValue, shop);
+    const webhookId = await registerWebhooks(finalWebhookUrl, topicValue, shop, config.accessToken);
+    webhook_ids.push(webhookId);
   }));
+
+  console.log("Registered webhook ids", webhook_ids);
+  // save webhook ids in DB
+  await dbUtils.upsertIntoTable(dbClient, shop, config.accessToken, webhook_ids);
+  console.log("Webhooj ID's saved to DB", webhook_ids);
 };
 
 /**
