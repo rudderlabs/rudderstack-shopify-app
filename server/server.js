@@ -153,6 +153,12 @@ app.prepare().then(async () => {
     return ctx;
   });
 
+  router.get('/health', ctx => {
+    ctx.response.body = "OK";
+    ctx.status = 200;
+    return ctx;
+  })
+
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("(.*)", async (ctx) => {
