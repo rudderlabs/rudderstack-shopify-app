@@ -1,5 +1,6 @@
-import { DataType } from "@shopify/shopify-api";
+import Shopify, { DataType } from "@shopify/shopify-api";
 import { topicMapping } from "../constants/topic-mapping";
+import { dbUtils } from "../dbUtils/helpers";
 import appContext from "../state/app-state";
 
 /**
@@ -29,8 +30,12 @@ export const getTopicMapping = () => {
 export const registerWebhooks = async (webhookUrl, topic, shop) => {
   try {
     // console.log("[registerWebhooks] AppContext", appContext);
+
+
     const shopContext = appContext.state.get(shop);
     const client = shopContext.client;
+    
+    // const client = new Shopify.Clients.Rest(shop, accessToken);
     const webhookToSubscribe = {
       topic: `${topic}`,
       address: `${webhookUrl}`,
@@ -44,6 +49,9 @@ export const registerWebhooks = async (webhookUrl, topic, shop) => {
       },
       type: DataType.JSON,
     });
+    
+    const { webhook } = response.body;
+    await dbUtils.upsertIntoTable(dbClient, shop, accessToken);
 
     console.log("[registerWebhooks] topic, webhookUrl DONE ", topic, webhookUrl);
   } catch (error) {
@@ -61,6 +69,11 @@ export const registerWebhooks = async (webhookUrl, topic, shop) => {
 export const updateWebhooks = async (webhookId, webhookUrl, shop) => {
   try {
     console.log("[updateWebhooks] AppContext", appContext);
+    
+    const dbClient  = appContext.getDbClient();
+    const rows = await dbUtils.getConfigByShop(dbClient, shop);
+    console.log("fetched from DB", rows);
+
     const shopContext = appContext.state.get(shop);
     const client = shopContext.client;
     const webhookToUpdate = {

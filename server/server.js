@@ -70,13 +70,18 @@ app.prepare().then(async () => {
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
         console.log(`The token is ${accessToken}`);
         console.log(`app state id ${appContext.id}`);
+
+        // TODO: remove setting in the map
         appContext.state.set(shop, {
           scope,
           accessToken,
           client: new Shopify.Clients.Rest(shop, accessToken),
+          dbClient
         });
+
+        appContext.setDbClient(dbClient);
         ///// persist shop related information in DB
-        await dbUtils.insertIntoTable(dbClient, shop, accessToken);
+        await dbUtils.upsertIntoTable(dbClient, shop, accessToken);
 
         const response = await Shopify.Webhooks.Registry.register({
           shop,
