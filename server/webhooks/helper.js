@@ -63,16 +63,17 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
  * @param {*} webhookUrl 
  * @param {*} shop 
  */
-export const updateWebhooks = async (webhookId, webhookUrl, shop) => {
+export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) => {
   try {
     console.log("[updateWebhooks] AppContext", appContext);
     
-    const dbClient  = appContext.getDbClient();
-    const rows = await dbUtils.getConfigByShop(dbClient, shop);
-    console.log("fetched from DB", rows);
+    // const rows = await dbUtils.getDataByShop(dbClient, shop);
+    // console.log("fetched from DB", rows);
 
-    const shopContext = appContext.state.get(shop);
-    const client = shopContext.client;
+    // const shopContext = appContext.state.get(shop);
+    // const client = shopContext.client;
+    const client = new Shopify.Clients.Rest(shop, accessToken);
+
     const webhookToUpdate = {
       id: webhookId,
       address: webhookUrl,
@@ -84,6 +85,7 @@ export const updateWebhooks = async (webhookId, webhookUrl, shop) => {
       },
       type: DataType.JSON,
     });
+    return response.body.webhook.id;
   } catch (error) {
     console.log(
       `Failed to update webhook - ${webhookUrl}, shop - ${shop}: Error ${error}`

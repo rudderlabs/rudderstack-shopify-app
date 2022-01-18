@@ -91,24 +91,39 @@ export const unregisterRudderWebhooks = async (shop) => {
  */
 export const updateRudderWebhooks = async (dataPlaneUrl, shop) => {
   let webhookUrl;
-  webhookUrl = embedRudderSignatureInUrl(dataPlaneUrl);
-  webhookUrl = embedShopSignatureInUrl(webhookUrl, shop);
-  const registeredWebhooks = await fetchWebhooks(shop);
+  // webhookUrl = embedRudderSignatureInUrl(dataPlaneUrl);
+  // webhookUrl = embedShopSignatureInUrl(webhookUrl, shop);
+
+  const dbClient = appContext.getDbClient();
+  // const config = await dbUtils.getConfigByShop(dbClient, shop);
+  // const { accessToken, webhook_ids: registeredWebhooks } = config;
+
+  // const registeredWebhooks = await fetchWebhooks(shop);
+  const config = await dbUtils.getConfigByShop(dbClient, shop);
+  const { accessToken, webhooks: registeredWebhooks } = config;
   console.log("REGISTERED WEBHOOKS", registeredWebhooks);
-  const rudderWebhookItems = filterRudderWebhooksByIdAndTopic(
-    registeredWebhooks,
-    shop
-  );
-  rudderWebhookItems.forEach((rudderWebhookItem) => {
+  // const rudderWebhookItems = filterRudderWebhooksByIdAndTopic(
+  //   registeredWebhooks,
+  //   shop
+  // );
+  const updatedWebhooks = [];
+  await Promise.all(registeredWebhooks.map(async ({ webhookId, topic }) => {
     try {
-      webhookUrl = embedTopicInUrl(webhookUrl, rudderWebhookItem.topic);
-      updateWebhooks(rudderWebhookItem.id, webhookUrl, shop);
+      webhookUrl = embedTopicInUrl(dataPlaneUrl, topic);
+      const updatedId = await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
+      updatedWebhooks.push({ webhookId: updatedId, topic });
+      console.log(`Updated webhook - ${webhookId} ${topic}`);
+
+      // save webhook ids in DB
+      await dbUtils.upsertIntoTable(dbClient, shop, accessToken, updatedWebhooks, dataPlaneUrl);
+      console.log("Webhooks saved to DB");
+
     } catch (error) {
       console.log(
         `Failed to process webhook update, for webhook ${rudderWebhookItem} Error: ${error}`
       );
     }
-  });
+  }));
 };
 
 /**
@@ -117,27 +132,26 @@ export const updateRudderWebhooks = async (dataPlaneUrl, shop) => {
  * @param {*} shop
  */
 export const registerRudderWebhooks = async (dataPlaneUrl, shop) => {
-  let webhookUrl;
-  webhookUrl = embedRudderSignatureInUrl(dataPlaneUrl);
-  webhookUrl = embedShopSignatureInUrl(webhookUrl, shop);
+  // let webhookUrl;
+  // webhookUrl = embedRudderSignatureInUrl(dataPlaneUrl);
+  // webhookUrl = embedShopSignatureInUrl(webhookUrl, shop);
   const topics = getTopicMapping();
   
-  const webhook_ids = [];
+  const webhooks = [];
   // fetch accessToken from DB
   const dbClient = appContext.getDbClient();
-  const rows = await dbUtils.getConfigByShop(dbClient, shop);
-  const { config } = rows[0];
+  const config = await dbUtils.getConfigByShop(dbClient, shop);
   
   await Promise.all(Object.entries(topics).map(async ([topicKey, topicValue]) => {
-    const finalWebhookUrl = embedTopicInUrl(webhookUrl, `${topicKey}`).href;
+    const finalWebhookUrl = embedTopicInUrl(dataPlaneUrl, `${topicKey}`).href;
     const webhookId = await registerWebhooks(finalWebhookUrl, topicValue, shop, config.accessToken);
-    webhook_ids.push(webhookId);
+    webhooks.push({webhookId, topic: topicKey});
   }));
 
-  console.log("Registered webhook ids", webhook_ids);
+  console.log("Registered webhook ids", webhooks);
   // save webhook ids in DB
-  await dbUtils.upsertIntoTable(dbClient, shop, config.accessToken, webhook_ids);
-  console.log("Webhooj ID's saved to DB", webhook_ids);
+  await dbUtils.upsertIntoTable(dbClient, shop, config.accessToken, webhooks, dataPlaneUrl);
+  console.log("Webhooks saved to DB");
 };
 
 /**

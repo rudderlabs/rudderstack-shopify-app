@@ -113,6 +113,8 @@ app.prepare().then(async () => {
   router.post("/webhooks", async (ctx) => {
     try {
       await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
+      const { shop } = ctx.request.query;
+      await dbUtils.deleteShopInfo(dbClient, shop);
       console.log(`Webhook processed, returned status code 200`);
     } catch (error) {
       console.log(`Failed to process webhook: ${error}`);

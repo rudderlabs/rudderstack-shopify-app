@@ -8,7 +8,8 @@ const createTableIfNotExists = async dbClient => {
   }
   const createQuery = `
   CREATE TABLE IF NOT EXISTS store_configs (
-    shopname varchar(45) NOT NULL PRIMARY KEY,
+    id SERIAL NOT NULL PRIMARY KEY,
+    shopname VARCHAR(45) NOT NULL UNIQUE,
     config JSON
   )
   `;
@@ -16,7 +17,7 @@ const createTableIfNotExists = async dbClient => {
   console.log("Table init");
 }
 
-const getConfigByShop = async (dbClient, shop) => {
+const getDataByShop = async (dbClient, shop) => {
   if (!dbClient) {
     throw new Error("DB client not found");
   }
@@ -29,18 +30,29 @@ const getConfigByShop = async (dbClient, shop) => {
   return rows;
 };
 
+const getConfigByShop = async (dbClient, shop) => {
+  if (!dbClient) {
+    throw new Error("DB client not found");
+  }
+  const rows = await getDataByShop(dbClient, shop);
+  if (rows.length === 0) {
+    return null;
+  }
+  return rows[0].config;
+};
+
 const upsertIntoTable = async (dbClient, shop, accessToken, webhookIdList, dataPlaneUrl) => {
   if (!dbClient) {
     throw new Error("DB client not found");
   }
   // check if shop config is already present in DB
-  const rows = await getConfigByShop(dbClient, shop);
-  
+  const rows = await getDataByShop(dbClient, shop);
+
   let query;
   const configToSave = {
     accessToken,
     dataPlaneUrl,
-    webhook_ids: webhookIdList || [],
+    webhooks: webhookIdList || [],
   }
 
   if (rows.length !== 0) {
@@ -62,8 +74,19 @@ const upsertIntoTable = async (dbClient, shop, accessToken, webhookIdList, dataP
   console.log('Shop info Insert/Update success');
 };
 
+const deleteShopInfo = async (dbClient, shop) => {
+  const deleteQuery = `
+    DELETE from store_configs
+    WHERE "shopname"='${shop}'
+  `;
+  await dbClient.query(deleteQuery);
+  console.log('Deletion success');
+};
+
 export const dbUtils = {
   createTableIfNotExists,
   upsertIntoTable,
-  getConfigByShop
+  getDataByShop,
+  getConfigByShop,
+  deleteShopInfo
 };
