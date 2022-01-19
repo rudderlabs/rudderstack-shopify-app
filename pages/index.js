@@ -16,7 +16,7 @@ import {
   registerWebHooks,
   fetchRudderWebhook,
   formatInputs,
-} from "../util/utils";
+} from "../webapp-util/utils";
 
 function Index() {
   const app = useAppBridge();
@@ -63,10 +63,6 @@ function Index() {
       await fetchRudderWebhook(
         token,
         (storedDPUrl, savedWriteKey) => {
-          // setCurrentDataPlaneUrl(storedDPUrl);
-          // setCurrentWriteKey(savedWriteKey);
-          // setStoredWritekey(savedWriteKey);
-          // setStoredDataPlane(storedDPUrl);
           performUpdates(storedDPUrl, savedWriteKey);
           setIsConfigPresent(true);
           console.log("[onSuccess] isConfigPresent ", isConfigPresent);
