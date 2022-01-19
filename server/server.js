@@ -23,7 +23,7 @@ const app = next({
 });
 const handle = app.getRequestHandler();
 const dbConObject = DBConnector
-  .setClientConfigFromEnv()
+  .setConfigFromEnv()
   .connect()
   .then(() => console.log("Connected to DB successfully"))
   .catch(err => {
