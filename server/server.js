@@ -22,7 +22,14 @@ const app = next({
   dev,
 });
 const handle = app.getRequestHandler();
-const dbConObject = DBConnector.setClientConfigFromEnv().connect();
+const dbConObject = DBConnector
+  .setClientConfigFromEnv()
+  .connect()
+  .then(() => console.log("Connected to DB successfully"))
+  .catch(err => {
+    console.log(`DB connection Failed: ${err}`);
+    process.exit();
+  });
 
 const REQUIRED_SCOPES = [
   "write_products",

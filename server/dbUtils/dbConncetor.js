@@ -15,15 +15,14 @@ export class DBConnector {
     return dbConObject;
   }
 
-  connect() {
+  async connect() {
     // TODO: change to mongoose.connect('mongodb://username:password@host:port/database?options...');
     if (!this.config) {
-      throw new Error('[DbConnector]:: DB config not set');
+      throw new Error('[DbConnector]:: Could not connect to DB. config not set.');
     }
-    mongoose.connect(
+    await mongoose.connect(
       `mongodb+srv://mongoprod:${this.config.PASSWORD}@cluster0.rbjvc.mongodb.net/${this.config.DB_NAME}?retryWrites=true&w=majority`
     );
-    console.log("Connected to DB successfully");
     return this;
   }
 }
