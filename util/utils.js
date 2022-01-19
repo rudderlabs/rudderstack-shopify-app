@@ -88,26 +88,22 @@ export const fetchRudderWebhook = async (token, onConfigPresent, onError) => {
     console.log("inside fetch rudderwebhook");
     console.log(`The session token is: ${token}`);
     const params = new URL(window.location.href).searchParams;
-    const response = await fetch(`/fetch/dataplane`, {
+    const response = await fetch(`/fetch/rudder-webhook`, {
       headers: {
         Authorization: `Bearer ${token}`,
         shop: `${params.get("shop")}`,
       },
       method: "GET",
     });
-    const webhook = await response.json();
-    console.log("[fetchRudderWebhook] webhook", webhook);
-    if (webhook && webhook.address) {
-      // const storedDPUrl = new URL(webhook.address);
-      // storedDPUrl.searchParams.delete("shop");
-      // storedDPUrl.searchParams.delete("signature");
-      // storedDPUrl.searchParams.delete("topic");
-      // storedDPUrl.searchParams.delete("writeKey");
-      const [storedDPUrl, savedWriteKey] = parseInfoFromAddress(webhook.address);
+    const { rudderWebhookUrl } = await response.json();
+    console.log("[fetchRudderWebhook] webhook", rudderWebhookUrl);
+    if (rudderWebhookUrl) {
+      const [storedDPUrl, savedWriteKey] = parseInfoFromAddress(rudderWebhookUrl);
       console.log("[fetchRudderWebhook] parsedInfo", storedDPUrl, savedWriteKey);
       onConfigPresent(storedDPUrl, savedWriteKey);
     } else {
-      console.log("[fetchRudderWebhook] no existing webhook found");
+      onError("no existing data plane url found");  // notification message
+      console.log("[fetchRudderWebhook] no existing data plane url found");
     }
   } catch (err) {
     console.log("[fetchRudderWebhook] ", err);

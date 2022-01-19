@@ -1,5 +1,6 @@
-import { DataType } from "@shopify/shopify-api";
+import Shopify, { DataType } from "@shopify/shopify-api";
 import { topicMapping } from "../constants/topic-mapping";
+import { dbUtils } from "../dbUtils/helpers";
 import appContext from "../state/app-state";
 
 /**
@@ -26,11 +27,9 @@ export const getTopicMapping = () => {
  * Registers webhook subscriptions to a the specified webhook url
  * @param {*} webhookUrl
  */
-export const registerWebhooks = async (webhookUrl, topic, shop) => {
+export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => {
   try {
-    // console.log("[registerWebhooks] AppContext", appContext);
-    const shopContext = appContext.state.get(shop);
-    const client = shopContext.client;
+    const client = new Shopify.Clients.Rest(shop, accessToken);
     const webhookToSubscribe = {
       topic: `${topic}`,
       address: `${webhookUrl}`,
@@ -44,8 +43,9 @@ export const registerWebhooks = async (webhookUrl, topic, shop) => {
       },
       type: DataType.JSON,
     });
-
     console.log("[registerWebhooks] topic, webhookUrl DONE ", topic, webhookUrl);
+    console.log("RESPONSE", JSON.stringify(response.body));
+    return response.body.webhook.id;
   } catch (error) {
     console.log(
       `Failed to register webhook - ${webhookUrl}, topic - ${topic} shop - ${shop}: Error ${error}`
@@ -58,11 +58,17 @@ export const registerWebhooks = async (webhookUrl, topic, shop) => {
  * @param {*} webhookUrl 
  * @param {*} shop 
  */
-export const updateWebhooks = async (webhookId, webhookUrl, shop) => {
+export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) => {
   try {
     console.log("[updateWebhooks] AppContext", appContext);
-    const shopContext = appContext.state.get(shop);
-    const client = shopContext.client;
+    
+    // const rows = await dbUtils.getDataByShop(dbClient, shop);
+    // console.log("fetched from DB", rows);
+
+    // const shopContext = appContext.state.get(shop);
+    // const client = shopContext.client;
+    const client = new Shopify.Clients.Rest(shop, accessToken);
+
     const webhookToUpdate = {
       id: webhookId,
       address: webhookUrl,
@@ -74,6 +80,7 @@ export const updateWebhooks = async (webhookId, webhookUrl, shop) => {
       },
       type: DataType.JSON,
     });
+    return response.body.webhook.id;
   } catch (error) {
     console.log(
       `Failed to update webhook - ${webhookUrl}, shop - ${shop}: Error ${error}`
