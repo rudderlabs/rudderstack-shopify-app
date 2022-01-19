@@ -19,7 +19,6 @@ const getConfigByShop = async (dbConObject, shop) => {
 
 // if on load is true, we only want to udpate the accessToken.
 // if on load is false, we insert or update the whole data
-// return true denotes success
 const upsertIntoTable = async (dbConObject, shop, accessToken, onLoad, webhookList, dataPlaneUrl) => {
   if (!dbConObject) {
     throw new Error("DB Connector not found");
@@ -48,7 +47,7 @@ const upsertIntoTable = async (dbConObject, shop, accessToken, onLoad, webhookLi
   // data exists
   // if onLoad, only update the accessToken
   if (onLoad) {
-    const updateData = Object.assign({}, existingData)
+    const updateData = Object.assign({}, existingData);
     updateData.config = {
       ...existingData.config,
       accessToken

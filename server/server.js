@@ -54,10 +54,6 @@ Shopify.Context.initialize({
   SESSION_STORAGE: new Shopify.Session.MemorySessionStorage(),
 });
 
-////////// create table in db if already not present
-// dbUtils.createTableIfNotExists(dbClient)
-//   .then(() => console.log("success"))
-//   .catch(console.log);
 
 // Storing the currently active shops in memory will force them to re-login when your server restarts. You should
 // persist this object in your app.
@@ -123,8 +119,9 @@ app.prepare().then(async () => {
       await dbUtils.deleteShopInfo(dbConObject, shop);
       console.log(`Webhook processed, returned status code 200`);
     } catch (error) {
-      // TODO: if it fails to register this call back, panic deliberately
-      console.log(`Failed to process webhook: ${error}`);
+      // if it fails to register this call back, exit
+      console.log(`Failed to register uninstall webhook: ${error}`);
+      process.exit();
     }
   });
 
