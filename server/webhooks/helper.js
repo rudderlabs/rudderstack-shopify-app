@@ -29,11 +29,6 @@ export const getTopicMapping = () => {
  */
 export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => {
   try {
-    // console.log("[registerWebhooks] AppContext", appContext);
-
-    // const shopContext = appContext.state.get(shop);
-    // const client = shopContext.client;
-    
     const client = new Shopify.Clients.Rest(shop, accessToken);
     const webhookToSubscribe = {
       topic: `${topic}`,

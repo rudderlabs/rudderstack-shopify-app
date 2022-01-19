@@ -1,92 +1,93 @@
 // TODO: put db column names in an enum
 // add a node-cache layer in front of the DB
 // ADD created_at, updated_at timestamp columns
+import StoreConfig from "./models/storeConfig"
 
-const createTableIfNotExists = async dbClient => {
-  if (!dbClient) {
-    throw new Error("DB client not found");
+const getDataByShop = async (dbConObject, shop) => {
+  if (!dbConObject) {
+    throw new Error("DB Connector not found");
   }
-  const createQuery = `
-  CREATE TABLE IF NOT EXISTS store_configs (
-    id SERIAL NOT NULL PRIMARY KEY,
-    shopname VARCHAR(45) NOT NULL UNIQUE,
-    config JSON
-  )
-  `;
-  await dbClient.query(createQuery);
-  console.log("Table init");
-}
-
-const getDataByShop = async (dbClient, shop) => {
-  if (!dbClient) {
-    throw new Error("DB client not found");
-  }
-  const searchQuery = `
-    SELECT "config" from store_configs
-    WHERE "shopname"='${shop}'
-  `;
-  const { rows } = await dbClient.query(searchQuery);
-  console.log('Fetch success');
-  return rows;
+  const storeInfo = await StoreConfig.findOne({ shopname: shop });
+  console.log("Store Info ", storeInfo);
+  return storeInfo;
 };
 
-const getConfigByShop = async (dbClient, shop) => {
-  if (!dbClient) {
-    throw new Error("DB client not found");
-  }
-  const rows = await getDataByShop(dbClient, shop);
-  if (rows.length === 0) {
-    return null;
-  }
-  return rows[0].config;
+const getConfigByShop = async (dbConObject, shop) => {
+  const storeInfo = await getDataByShop(dbConObject, shop);
+  return storeInfo.config;
 };
 
-const upsertIntoTable = async (dbClient, shop, accessToken, webhookIdList, dataPlaneUrl) => {
-  if (!dbClient) {
-    throw new Error("DB client not found");
-  }
-  // check if shop config is already present in DB
-  const rows = await getDataByShop(dbClient, shop);
-
-  let query;
-  const configToSave = {
-    accessToken,
-    dataPlaneUrl,
-    webhooks: webhookIdList || [],
+// if on load is true, we only want to udpate the accessToken.
+// if on load is false, we insert or update the whole data
+// return true denotes success
+const upsertIntoTable = async (dbConObject, shop, accessToken, onLoad, webhookList, dataPlaneUrl) => {
+  if (!dbConObject) {
+    throw new Error("DB Connector not found");
   }
 
-  if (rows.length !== 0) {
-    query = `
-      UPDATE store_configs
-      SET "config"='${JSON.stringify(configToSave)}'
-      WHERE "shopname"='${shop}'
-    `;
-    console.log("Update Query", query);
-  } else {
-    query = `
-      INSERT INTO store_configs("shopname", "config")
-      VALUES('${shop}', '${JSON.stringify(configToSave)}')
-    `; 
-    console.log("Insert Query", query);
+  const existingData = await StoreConfig.findOne({ shopname: shop });
+  if (!existingData) {
+    // insert whole
+    const insertData = {
+      shopname: shop,
+      config: {
+        dataPlaneUrl,
+        accessToken,
+        webhooks: webhookList || []
+      }
+    };
+    await StoreConfig.findOneAndUpdate(
+      { shopname: shop },
+      insertData,
+      { upsert: true }
+    );
+    console.log("inserted data in shop")
+    return;
+  }
+
+  // data exists
+  // if onLoad, only update the accessToken
+  if (onLoad) {
+    const updateData = Object.assign({}, existingData)
+    updateData.config = {
+      ...existingData.config,
+      accessToken
+    }
+    await StoreConfig.findOneAndUpdate({ shop }, updateData);
+    console.log("updated only access token for shop");
+    return;
   }
   
-  await dbClient.query(query);
-  console.log('Shop info Insert/Update success');
+  // update all fields
+  await StoreConfig.findOneAndUpdate(
+    { shopname: shop },
+    {
+      shopname: shop,
+      config: {
+        accessToken,
+        dataPlaneUrl,
+        webhooks: webhookList || []
+      }
+    }
+  );
+
+  console.log('Shop Update all fields success');
 };
 
-const deleteShopInfo = async (dbClient, shop) => {
-  const deleteQuery = `
-    DELETE from store_configs
-    WHERE "shopname"='${shop}'
-  `;
-  await dbClient.query(deleteQuery);
-  console.log('Deletion success');
+const deleteShopInfo = async (dbConObject, shop) => {
+  if (!dbConObject) {
+    throw new Error("DB Connector not found");
+  }
+  await StoreConfig.findOneAndDelete(
+    { shopname: shop }
+  );
+  console.log(`Config deleted for shop ${shop}`);
 };
 
 export const dbUtils = {
-  createTableIfNotExists,
   upsertIntoTable,
   getDataByShop,
   getConfigByShop,
+  getDataByShop,
   deleteShopInfo
 };

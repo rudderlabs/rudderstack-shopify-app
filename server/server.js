@@ -10,7 +10,7 @@ import appContext from "./state/app-state";
 import {
   registerRudderWebhooks,
   updateRudderWebhooks,
-  fetchRudderWebhook,
+  fetchDataPlaneUrl as fetchRudderWebhookUrl,
 } from "./service/process";
 import { DBConnector } from "./dbUtils/dbConncetor";
 import { dbUtils } from "./dbUtils/helpers";
@@ -22,7 +22,7 @@ const app = next({
   dev,
 });
 const handle = app.getRequestHandler();
-const dbClient = DBConnector.setConfigAndConnect().getClient();
+const dbConObject = DBConnector.setClientConfigFromEnv().connect();
 
 const REQUIRED_SCOPES = [
   "write_products",
@@ -48,9 +48,9 @@ Shopify.Context.initialize({
 });
 
 ////////// create table in db if already not present
-dbUtils.createTableIfNotExists(dbClient)
-  .then(() => console.log("success"))
-  .catch(console.log);
+// dbUtils.createTableIfNotExists(dbClient)
+//   .then(() => console.log("success"))
+//   .catch(console.log);
 
 // Storing the currently active shops in memory will force them to re-login when your server restarts. You should
 // persist this object in your app.
@@ -71,17 +71,16 @@ app.prepare().then(async () => {
         console.log(`The token is ${accessToken}`);
         console.log(`app state id ${appContext.id}`);
 
-        // TODO: remove setting in the map
         appContext.state.set(shop, {
           scope,
           accessToken,
           client: new Shopify.Clients.Rest(shop, accessToken),
-          dbClient
         });
 
-        appContext.setDbClient(dbClient);
+        appContext.setDBConnector(dbConObject);
         ///// persist shop related information in DB
-        await dbUtils.upsertIntoTable(dbClient, shop, accessToken);
+        console.log("SUPPOSED TO BE ON LOAD");
+        await dbUtils.upsertIntoTable(dbConObject, shop, accessToken, true);
 
         const response = await Shopify.Webhooks.Registry.register({
           shop,
@@ -114,9 +113,10 @@ app.prepare().then(async () => {
     try {
       await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
       const { shop } = ctx.request.query;
-      await dbUtils.deleteShopInfo(dbClient, shop);
+      await dbUtils.deleteShopInfo(dbConObject, shop);
       console.log(`Webhook processed, returned status code 200`);
     } catch (error) {
+      // TODO: if it fails to register this call back, panic deliberately
       console.log(`Failed to process webhook: ${error}`);
     }
   });
@@ -157,15 +157,18 @@ app.prepare().then(async () => {
     return ctx;
   });
 
-  router.get("/fetch/dataplane", async (ctx) => {
+  router.get("/fetch/rudder-webhook", async (ctx) => {
     verifyRequest({ returnHeader: true });
     try {
       const shop = ctx.get("shop");
-      const webhook = await fetchRudderWebhook(shop);
-      ctx.body = webhook;
+      const rudderWebhookUrl = await fetchRudderWebhookUrl(shop);
+      console.log("FROM FETCH ROUTE ", rudderWebhookUrl);
+      ctx.body = {
+        rudderWebhookUrl: rudderWebhookUrl || null
+      };
       ctx.res.statusCode = 200;
     } catch (error) {
-      console.log(`Failed to process webhook updates: ${error}`);
+      console.log(`Failed to fetch dataplane: ${error}`);
       ctx.res.statusCode = 500;
     }
     return ctx;

@@ -1,40 +1,29 @@
-import { Client } from "pg";
+import mongoose from "mongoose";
 
 export class DBConnector {
   constructor() {
-    this.client = null;
+    // this.client = null;
+    this.config = null;
   }
 
   static setClientConfigFromEnv() {
     const dbConObject = new DBConnector();
-    dbConObject.client = new Client({
-      user: process.env.APP_CONFIG_USER,
-      host: process.env.APP_CONFIG_HOST,
-      database: process.env.APP_CONFIG_DB_NAME,
-      password: process.env.APP_CONFIG_PASSWORD,
-      port: process.env.APP_CONFIG_PORT,
-    });
+    dbConObject.config = {
+      PASSWORD: process.env.APP_CONFIG_PASSWORD,
+      DB_NAME: process.env.APP_CONFIG_DB_NAME
+    }
     return dbConObject;
   }
 
-  static setConfigAndConnect() {
-    return this.setClientConfigFromEnv().connect();
-  }
-
   connect() {
-    if (!this.client) {
-      throw new Error('[DbConnector]:: DB client not created');
+    // TODO: change to mongoose.connect('mongodb://username:password@host:port/database?options...');
+    if (!this.config) {
+      throw new Error('[DbConnector]:: DB config not set');
     }
-    this.client.connect(err => {
-      if (err) {
-        throw err;
-      }
-      console.log('[DbConnector]:: Connected to DB');
-    });
+    mongoose.connect(
+      `mongodb+srv://mongoprod:${this.config.PASSWORD}@cluster0.rbjvc.mongodb.net/${this.config.DB_NAME}?retryWrites=true&w=majority`
+    );
+    console.log("Connected to DB successfully");
     return this;
-  }
-
-  getClient() {
-    return this.client;
   }
 }
