@@ -102,6 +102,7 @@ export const fetchRudderWebhook = async (token, onConfigPresent, onError) => {
       console.log("[fetchRudderWebhook] parsedInfo", storedDPUrl, savedWriteKey);
       onConfigPresent(storedDPUrl, savedWriteKey);
     } else {
+      onError("no existing data plane url found");  // notification message
       console.log("[fetchRudderWebhook] no existing data plane url found");
     }
   } catch (err) {

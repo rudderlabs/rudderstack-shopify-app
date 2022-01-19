@@ -59,23 +59,14 @@ export const updateRudderWebhooks = async (dataPlaneUrl, shop) => {
   
   const updatedWebhooks = [];
   await Promise.all(registeredWebhooks.map(async ({ webhookId, topic }) => {
-    try {
       webhookUrl = embedTopicInUrl(dataPlaneUrl, topic);
       const updatedId = await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
       updatedWebhooks.push({ webhookId: updatedId, topic });
       console.log(`Updated webhook - ${webhookId} ${topic}`);
+    }));
 
-      // save webhook ids in DB
-      // TODO: optimize this by saving the webhooks in one go
-      await dbUtils.upsertIntoTable(dbConObject, shop, accessToken, false, updatedWebhooks, dataPlaneUrl);
-      console.log("Webhooks saved to DB");
-
-    } catch (error) {
-      console.log(
-        `Failed to process webhook update, for webhook ${rudderWebhookItem} Error: ${error}`
-      );
-    }
-  }));
+  await dbUtils.upsertIntoTable(dbConObject, shop, accessToken, false, updatedWebhooks, dataPlaneUrl);
+  console.log("Webhooks saved to DB");
 };
 
 /**
@@ -108,7 +99,7 @@ export const registerRudderWebhooks = async (dataPlaneUrl, shop) => {
  * @param {*} shop
  * @returns {Object}
  */
-export const fetchDataPlaneUrl = async (shop) => {
+export const fetchRudderWebhookUrl = async (shop) => {
   const dbConObject = appContext.getDBConnector();
   const config = await dbUtils.getConfigByShop(dbConObject, shop);
   console.log("FROM UTIL FUNCTION ", JSON.stringify(config));

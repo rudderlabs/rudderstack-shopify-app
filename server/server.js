@@ -10,7 +10,7 @@ import appContext from "./state/app-state";
 import {
   registerRudderWebhooks,
   updateRudderWebhooks,
-  fetchDataPlaneUrl as fetchRudderWebhookUrl,
+  fetchRudderWebhookUrl,
 } from "./service/process";
 import { DBConnector } from "./dbUtils/dbConncetor";
 import { dbUtils } from "./dbUtils/helpers";
@@ -164,7 +164,7 @@ app.prepare().then(async () => {
       const rudderWebhookUrl = await fetchRudderWebhookUrl(shop);
       console.log("FROM FETCH ROUTE ", rudderWebhookUrl);
       ctx.body = {
-        rudderWebhookUrl: rudderWebhookUrl || null
+        rudderWebhookUrl: rudderWebhookUrl
       };
       ctx.res.statusCode = 200;
     } catch (error) {

@@ -14,7 +14,7 @@ const getDataByShop = async (dbConObject, shop) => {
 
 const getConfigByShop = async (dbConObject, shop) => {
   const storeInfo = await getDataByShop(dbConObject, shop);
-  return storeInfo.config;
+  return storeInfo ? storeInfo.config : null;
 };
 
 // if on load is true, we only want to udpate the accessToken.
