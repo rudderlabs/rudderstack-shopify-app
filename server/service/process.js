@@ -52,8 +52,7 @@ export const unregisterRudderWebhooks = async (shop) => {
 export const updateRudderWebhooks = async (dataPlaneUrl, shop) => {
   let webhookUrl;
 
-  const dbConObject = appContext.getDBConnector();
-  const config = await dbUtils.getConfigByShop(dbConObject, shop);
+  const config = await dbUtils.getConfigByShop(shop);
   const { accessToken, webhooks: registeredWebhooks } = config;
   console.log("REGISTERED WEBHOOKS", registeredWebhooks);
   
@@ -65,7 +64,7 @@ export const updateRudderWebhooks = async (dataPlaneUrl, shop) => {
       console.log(`Updated webhook - ${webhookId} ${topic}`);
     }));
 
-  await dbUtils.upsertIntoTable(dbConObject, shop, accessToken, false, updatedWebhooks, dataPlaneUrl);
+  await dbUtils.upsertIntoTable(shop, accessToken, false, updatedWebhooks, dataPlaneUrl);
   console.log("Webhooks saved to DB");
 };
 
@@ -79,8 +78,7 @@ export const registerRudderWebhooks = async (dataPlaneUrl, shop) => {
   
   const webhooks = [];
   // fetch accessToken from DB
-  const dbConObject = appContext.getDBConnector();
-  const config = await dbUtils.getConfigByShop(dbConObject, shop);
+  const config = await dbUtils.getConfigByShop(shop);
   
   await Promise.all(Object.entries(topics).map(async ([topicKey, topicValue]) => {
     const finalWebhookUrl = embedTopicInUrl(dataPlaneUrl, `${topicKey}`).href;
@@ -90,7 +88,7 @@ export const registerRudderWebhooks = async (dataPlaneUrl, shop) => {
 
   console.log("Registered webhook id", webhooks);
   // save webhook ids in DB
-  await dbUtils.upsertIntoTable(dbConObject, shop, config.accessToken, false, webhooks, dataPlaneUrl);
+  await dbUtils.upsertIntoTable(shop, config.accessToken, false, webhooks, dataPlaneUrl);
   console.log("Webhooks saved to DB");
 };
 
@@ -100,8 +98,7 @@ export const registerRudderWebhooks = async (dataPlaneUrl, shop) => {
  * @returns {Object}
  */
 export const fetchRudderWebhookUrl = async (shop) => {
-  const dbConObject = appContext.getDBConnector();
-  const config = await dbUtils.getConfigByShop(dbConObject, shop);
+  const config = await dbUtils.getConfigByShop(shop);
   console.log("FROM UTIL FUNCTION ", JSON.stringify(config));
   if (!config || !config.dataPlaneUrl) {
     return null;

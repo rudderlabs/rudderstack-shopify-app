@@ -22,6 +22,7 @@ const app = next({
   dev,
 });
 const handle = app.getRequestHandler();
+
 const dbConObject = DBConnector
   .setConfigFromEnv()
   .connect()
@@ -67,6 +68,7 @@ app.prepare().then(async () => {
     createShopifyAuth({
       accessMode: "offline",
       async afterAuth(ctx) {
+
         // Access token and shop available in ctx.state.shopify
         const { shop, accessToken, scope } = ctx.state.shopify;
         const host = ctx.query.host;
@@ -79,11 +81,10 @@ app.prepare().then(async () => {
           accessToken,
           client: new Shopify.Clients.Rest(shop, accessToken),
         });
-
-        appContext.setDBConnector(dbConObject);
+        
         ///// persist shop related information in DB
         console.log("SUPPOSED TO BE ON LOAD");
-        await dbUtils.upsertIntoTable(dbConObject, shop, accessToken, true);
+        await dbUtils.upsertIntoTable(shop, accessToken, true);
 
         const response = await Shopify.Webhooks.Registry.register({
           shop,

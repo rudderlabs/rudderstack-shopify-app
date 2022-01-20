@@ -3,27 +3,20 @@
 // ADD created_at, updated_at timestamp columns
 import StoreConfig from "./models/storeConfig"
 
-const getDataByShop = async (dbConObject, shop) => {
-  if (!dbConObject) {
-    throw new Error("DB Connector not found");
-  }
+const getDataByShop = async (shop) => {
   const storeInfo = await StoreConfig.findOne({ shopname: shop });
   console.log("Store Info ", storeInfo);
   return storeInfo;
 };
 
-const getConfigByShop = async (dbConObject, shop) => {
-  const storeInfo = await getDataByShop(dbConObject, shop);
+const getConfigByShop = async (shop) => {
+  const storeInfo = await getDataByShop(shop);
   return storeInfo ? storeInfo.config : null;
 };
 
 // if on load is true, we only want to udpate the accessToken.
 // if on load is false, we insert or update the whole data
-const upsertIntoTable = async (dbConObject, shop, accessToken, onLoad, webhookList, dataPlaneUrl) => {
-  if (!dbConObject) {
-    throw new Error("DB Connector not found");
-  }
-
+const upsertIntoTable = async (shop, accessToken, onLoad, webhookList, dataPlaneUrl) => {
   const existingData = await StoreConfig.findOne({ shopname: shop });
   if (!existingData) {
     // insert whole
@@ -73,10 +66,7 @@ const upsertIntoTable = async (dbConObject, shop, accessToken, onLoad, webhookLi
   console.log('Shop Update all fields success');
 };
 
-const deleteShopInfo = async (dbConObject, shop) => {
-  if (!dbConObject) {
-    throw new Error("DB Connector not found");
-  }
+const deleteShopInfo = async (shop) => {
   await StoreConfig.findOneAndDelete(
     { shopname: shop }
   );
