@@ -22,11 +22,14 @@ const app = next({
 });
 const handle = app.getRequestHandler();
 
-const dbConObject = DBConnector
-  .setConfigFromEnv()
+let dbConnected = false;
+DBConnector.setConfigFromEnv()
   .connect()
-  .then(() => console.log("Connected to DB successfully"))
-  .catch(err => {
+  .then(() => {
+    dbConnected = true;
+    console.log("Connected to DB successfully");
+  })
+  .catch((err) => {
     console.log(`DB connection Failed: ${err}`);
     process.exit();
   });
@@ -54,7 +57,6 @@ Shopify.Context.initialize({
   SESSION_STORAGE: new Shopify.Session.MemorySessionStorage(),
 });
 
-
 // Storing the currently active shops in memory will force them to re-login when your server restarts. You should
 // persist this object in your app.
 const ACTIVE_SHOPIFY_SHOPS = {};
@@ -67,14 +69,13 @@ app.prepare().then(async () => {
     createShopifyAuth({
       accessMode: "offline",
       async afterAuth(ctx) {
-
         // Access token and shop available in ctx.state.shopify
         const { shop, accessToken, scope } = ctx.state.shopify;
         const host = ctx.query.host;
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
         console.log(`The token is ${accessToken}`);
         console.log("inside Shopify afterAuth");
-        
+
         const currentShopInfo = await dbUtils.getDataByShop(shop);
         if (currentShopInfo) {
           // update only access token if shop entry exists
@@ -86,7 +87,7 @@ app.prepare().then(async () => {
             shopname: shop,
             config: {
               accessToken,
-            }
+            },
           };
           console.log("inserting shop info");
           await dbUtils.insertShopInfo(newShopInfo);
@@ -101,7 +102,7 @@ app.prepare().then(async () => {
             delete ACTIVE_SHOPIFY_SHOPS[shop];
             console.log("this should be called on uninstall");
             await dbUtils.deleteShopInfo(shop);
-          }
+          },
         });
 
         if (!response.success) {
@@ -177,7 +178,7 @@ app.prepare().then(async () => {
       const rudderWebhookUrl = await fetchRudderWebhookUrl(shop);
       console.log("FROM FETCH ROUTE ", rudderWebhookUrl);
       ctx.body = {
-        rudderWebhookUrl: rudderWebhookUrl
+        rudderWebhookUrl: rudderWebhookUrl,
       };
       ctx.res.statusCode = 200;
     } catch (error) {
@@ -187,11 +188,17 @@ app.prepare().then(async () => {
     return ctx;
   });
 
-  router.get('/health', ctx => {
+  router.get("/health", (ctx) => {
+    let response = "Not ready";
+    let status = 400;
+    if (dbConnected) {
+      response = "OK";
+      status = 200;
+    }
     ctx.response.body = "OK";
     ctx.status = 200;
     return ctx;
-  })
+  });
 
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
