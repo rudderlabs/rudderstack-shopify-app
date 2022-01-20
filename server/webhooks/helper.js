@@ -1,7 +1,5 @@
 import Shopify, { DataType } from "@shopify/shopify-api";
 import { topicMapping } from "../constants/topic-mapping";
-import { dbUtils } from "../dbUtils/helpers";
-import appContext from "../state/app-state";
 
 /**
  * Returns all the topics for subscription
@@ -60,13 +58,6 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
  */
 export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) => {
   try {
-    console.log("[updateWebhooks] AppContext", appContext);
-    
-    // const rows = await dbUtils.getDataByShop(dbClient, shop);
-    // console.log("fetched from DB", rows);
-
-    // const shopContext = appContext.state.get(shop);
-    // const client = shopContext.client;
     const client = new Shopify.Clients.Rest(shop, accessToken);
 
     const webhookToUpdate = {
@@ -85,48 +76,5 @@ export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) =
     console.log(
       `Failed to update webhook - ${webhookUrl}, shop - ${shop}: Error ${error}`
     );
-  }
-};
-
-/**
- * Returns the list of all webhook subscription objects
- * @returns {Array}
- */
-export const fetchWebhooks = async (shop) => {
-  let webhooks;
-  try {
-    console.log("[fetchWebhooks] AppContext", appContext);
-    const shopContext = appContext.state.get(shop);
-    const client = shopContext.client;
-    const response = await client.get({
-      path: "webhooks",
-      type: DataType.JSON,
-    });
-
-    webhooks = response.body.webhooks;
-  } catch (error) {
-    console.log(`Failed to fetch webhooks: Error ${error}`);
-  }
-  if (webhooks && webhooks.length > 0) {
-    return webhooks;
-  }
-  return webhooks;
-};
-
-/**
- * Removes the webhook subscription objects for the provided ids
- * @param {*} webhookIds
- */
-export const removeWebhooks = async (webhookId, shop) => {
-  console.log("[removeWebhooks] AppContext", appContext);
-  const shopContext = appContext.state.get(shop);
-  const client = shopContext.client;
-  try {
-    const response = await client.delete({
-      path: `webhooks/${webhookId}`,
-      type: DataType.JSON,
-    });
-  } catch (error) {
-    console.log(`Failed to remove webhooks: Error ${error.messsage}`);
   }
 };

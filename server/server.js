@@ -6,7 +6,6 @@ import Shopify, { ApiVersion } from "@shopify/shopify-api";
 import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
-import appContext from "./state/app-state";
 import {
   registerRudderWebhooks,
   updateRudderWebhooks,
@@ -74,25 +73,35 @@ app.prepare().then(async () => {
         const host = ctx.query.host;
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
         console.log(`The token is ${accessToken}`);
-        console.log(`app state id ${appContext.id}`);
-
-        appContext.state.set(shop, {
-          scope,
-          accessToken,
-          client: new Shopify.Clients.Rest(shop, accessToken),
-        });
+        console.log("inside Shopify afterAuth");
         
-        ///// persist shop related information in DB
-        console.log("SUPPOSED TO BE ON LOAD");
-        await dbUtils.upsertIntoTable(shop, accessToken, true);
+        const currentShopInfo = await dbUtils.getDataByShop(shop);
+        if (currentShopInfo) {
+          // update only access token if shop entry exists
+          currentShopInfo.config.accessToken = accessToken;
+          await dbUtils.updateShopInfo(shop, currentShopInfo);
+        } else {
+          // make new entry for shop info
+          const newShopInfo = {
+            shopname: shop,
+            config: {
+              accessToken,
+            }
+          };
+          console.log("inserting shop info");
+          await dbUtils.insertShopInfo(newShopInfo);
+        }
 
         const response = await Shopify.Webhooks.Registry.register({
           shop,
           accessToken,
           path: `/webhooks?shop=${shop}`,
           topic: "APP_UNINSTALLED",
-          webhookHandler: async (topic, shop, body) =>
-            delete ACTIVE_SHOPIFY_SHOPS[shop],
+          webhookHandler: async (topic, shop, body) => {
+            delete ACTIVE_SHOPIFY_SHOPS[shop];
+            console.log("this should be called on uninstall");
+            await dbUtils.deleteShopInfo(shop);
+          }
         });
 
         if (!response.success) {
@@ -115,14 +124,13 @@ app.prepare().then(async () => {
 
   router.post("/webhooks", async (ctx) => {
     try {
+      console.log("inside /webhooks route");
       await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
-      const { shop } = ctx.request.query;
-      await dbUtils.deleteShopInfo(dbConObject, shop);
+      // const { shop } = ctx.request.query;
+      // await dbUtils.deleteShopInfo(shop);
       console.log(`Webhook processed, returned status code 200`);
     } catch (error) {
-      // if it fails to register this call back, exit
       console.log(`Failed to register uninstall webhook: ${error}`);
-      process.exit();
     }
   });
 
