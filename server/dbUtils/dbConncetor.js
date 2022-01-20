@@ -22,7 +22,7 @@ export class DBConnector {
       throw new Error('[DbConnector]:: Could not connect to DB. config not set.');
     }
     await mongoose.connect(
-      // `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?retryWrites=true&w=majority`
+      `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?retryWrites=true&w=majority`
     );
     return this;
   }
