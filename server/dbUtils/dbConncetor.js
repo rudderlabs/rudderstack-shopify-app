@@ -21,9 +21,8 @@ export class DBConnector {
     if (!this.config) {
       throw new Error('[DbConnector]:: Could not connect to DB. config not set.');
     }
-    // `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?retryWrites=true&w=majority`
     await mongoose.connect(
-      `mongodb+srv://mongoprod:rudderpassword@cluster0.rbjvc.mongodb.net/shopify_app_db?retryWrites=true&w=majority`
+      // `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?retryWrites=true&w=majority`
     );
     return this;
   }
