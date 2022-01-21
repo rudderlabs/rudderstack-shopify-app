@@ -126,6 +126,9 @@ app.prepare().then(async () => {
   router.post("/webhooks", async (ctx) => {
     try {
       console.log("inside /webhooks route");
+      console.log("CTX BODY", JSON.stringify(ctx.request.body));
+      console.log("CTX QUERY", JSON.stringify(ctx.request.query));
+      console.log("CTX", JSON.stringify(ctx));
       await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
       // const { shop } = ctx.request.query;
       // await dbUtils.deleteShopInfo(shop);
