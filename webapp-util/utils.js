@@ -20,7 +20,7 @@
     const responseData = await response.json();
     console.log("response body", responseData);
     if (responseData.success) {
-      onSuccess("Registered webhook");
+      onSuccess("Updated webhooks");
     } else {
       onError(responseData.error);  
     }
@@ -53,7 +53,7 @@ export const registerWebHooks = async (url, token, onSuccess, onError) => {
     const responseData = await response.json();
     console.log("response body", responseData);
     if (responseData.success) {
-      onSuccess("Registered webhook");
+      onSuccess("Registered webhooks");
     } else {
       onError(responseData.error);  
     }
