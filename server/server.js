@@ -149,10 +149,12 @@ app.prepare().then(async () => {
       const dataplaneUrl = ctx.request.query.url;
       const shop = ctx.get("shop");
       await registerRudderWebhooks(dataplaneUrl, shop);
-      ctx.res.statusCode = 200;
+      ctx.body = { success: true };
+      ctx.status = 200;
     } catch (error) {
       console.log(`Failed to process webhook registry: ${error}`);
-      ctx.res.statusCode = 500;
+      ctx.body = { success: false, error: "Register Webhooks Failed" };
+      ctx.status = 500;
     }
     return ctx;
   });
@@ -163,10 +165,12 @@ app.prepare().then(async () => {
       const dataplaneUrl = ctx.request.query.url;
       const shop = ctx.get("shop");
       updateRudderWebhooks(dataplaneUrl, shop);
-      ctx.res.statusCode = 200;
+      ctx.body = { success: true };
+      ctx.status = 200;
     } catch (error) {
       console.log(`Failed to process webhook updates: ${error}`);
-      ctx.res.statusCode = 500;
+      ctx.body = { success: false, error: "Updated Webhooks failed" };
+      ctx.status = 500;
     }
     return ctx;
   });

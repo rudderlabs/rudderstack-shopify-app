@@ -26,29 +26,23 @@ export const getTopicMapping = () => {
  * @param {*} webhookUrl
  */
 export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => {
-  try {
-    const client = new Shopify.Clients.Rest(shop, accessToken);
-    const webhookToSubscribe = {
-      topic: `${topic}`,
-      address: `${webhookUrl}`,
-      format: "json",
-    };
-    console.log("[registerWebhooks] topic, webhookUrl ", topic, webhookUrl);
-    const response = await client.post({
-      path: "webhooks",
-      data: {
-        webhook: webhookToSubscribe,
-      },
-      type: DataType.JSON,
-    });
-    console.log("[registerWebhooks] topic, webhookUrl DONE ", topic, webhookUrl);
-    console.log("RESPONSE", JSON.stringify(response.body));
-    return response.body.webhook.id;
-  } catch (error) {
-    console.log(
-      `Failed to register webhook - ${webhookUrl}, topic - ${topic} shop - ${shop}: Error ${error}`
-    );
-  }
+  const client = new Shopify.Clients.Rest(shop, accessToken);
+  const webhookToSubscribe = {
+    topic: `${topic}`,
+    address: `${webhookUrl}`,
+    format: "json",
+  };
+  console.log("[registerWebhooks] topic, webhookUrl ", topic, webhookUrl);
+  const response = await client.post({
+    path: "webhooks",
+    data: {
+      webhook: webhookToSubscribe,
+    },
+    type: DataType.JSON,
+  });
+  console.log("[registerWebhooks] topic, webhookUrl DONE ", topic, webhookUrl);
+  console.log("RESPONSE", JSON.stringify(response.body));
+  return response.body.webhook.id;
 };
 /**
  * Updates webhook subscription to specified address
@@ -57,24 +51,18 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
  * @param {*} shop 
  */
 export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) => {
-  try {
-    const client = new Shopify.Clients.Rest(shop, accessToken);
+  const client = new Shopify.Clients.Rest(shop, accessToken);
 
-    const webhookToUpdate = {
-      id: webhookId,
-      address: webhookUrl,
-    };
-    const response = await client.put({
-      path: `webhooks/${webhookId}`,
-      data: {
-        webhook: webhookToUpdate,
-      },
-      type: DataType.JSON,
-    });
-    return response.body.webhook.id;
-  } catch (error) {
-    console.log(
-      `Failed to update webhook - ${webhookUrl}, shop - ${shop}: Error ${error}`
-    );
-  }
+  const webhookToUpdate = {
+    id: webhookId,
+    address: webhookUrl,
+  };
+  const response = await client.put({
+    path: `webhooks/${webhookId}`,
+    data: {
+      webhook: webhookToUpdate,
+    },
+    type: DataType.JSON,
+  });
+  return response.body.webhook.id;
 };

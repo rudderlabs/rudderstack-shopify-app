@@ -16,8 +16,17 @@
       },
       method: "GET",
     });
-    onSuccess("Updated webhook");
+    
+    const responseData = await response.json();
+    console.log("response body", responseData);
+    if (responseData.success) {
+      onSuccess("Registered webhook");
+    } else {
+      onError(responseData.error);  
+    }
   } catch (err) {
+    // failsafety error handling
+    console.log(`error: ${err}`)
     onError(`Update webhook Failed. ${err.message}`);
   }
 };
@@ -40,8 +49,17 @@ export const registerWebHooks = async (url, token, onSuccess, onError) => {
       },
       method: "GET",
     });
-    onSuccess("Registered webhook");
+
+    const responseData = await response.json();
+    console.log("response body", responseData);
+    if (responseData.success) {
+      onSuccess("Registered webhook");
+    } else {
+      onError(responseData.error);  
+    }
   } catch (err) {
+    // failsafety error handling
+    console.log(`error: ${err}`)
     onError(`Register webhook Failed. ${err.message}`);
   }
 };

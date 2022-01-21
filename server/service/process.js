@@ -82,7 +82,6 @@ export const registerRudderWebhooks = async (rudderWebhookUrl, shop) => {
   const currentConfig = await dbUtils.getConfigByShop(shop);
   const topics = getTopicMapping();
   const webhooks = [];
-  
   await Promise.all(Object.entries(topics).map(async ([topicKey, topicValue]) => {
     const finalWebhookUrl = embedTopicInUrl(rudderWebhookUrl, `${topicKey}`).href;
     const webhookId = await registerWebhooks(
