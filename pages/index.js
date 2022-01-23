@@ -79,8 +79,8 @@ function Index() {
   }, []);
 
   const handleSubmit = async () => {
-    // const submittedDataPlaneUrl = event.target[0].value;
-    setIsSubmitting(false);
+    setIsSubmitting(true);
+    showNotification("Processing. Please wait.");
     console.log("[dataplaneURL]", currentDataplaneURL);
 
     const [formattedUrl, formattedWriteKey] = formatInputs(
@@ -93,8 +93,6 @@ function Index() {
     console.log("rudder source webhook: ", rudderSourceWebhook);
 
     const onSuccess = (message) => {
-      // setCurrentDataPlaneUrl(formattedUrl);
-      // setCurrentWriteKey(formattedWriteKey);
       performUpdates(formattedUrl, formattedWriteKey);
       setIsConfigPresent(true);
       console.log(message);
@@ -113,10 +111,11 @@ function Index() {
     const token = await getSessionToken(app);
     console.log("token fetched", token);
     if (isConfigPresent) {
-      updateWebHooks(rudderSourceWebhook, token, onSuccess, onError);
+      await updateWebHooks(rudderSourceWebhook, token, onSuccess, onError);
     } else {
-      registerWebHooks(rudderSourceWebhook, token, onSuccess, onError);
+      await registerWebHooks(rudderSourceWebhook, token, onSuccess, onError);
     }
+    console.log("check ", isSubmitting);
   };
 
   if (isLoading) {

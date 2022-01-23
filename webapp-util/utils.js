@@ -1,5 +1,5 @@
 /**
- * uril function to update webhooks on changing data plane url or writeKey
+ * util function to update webhooks on changing data plane url or writeKey
  * @param {*} url 
  * @param {*} token 
  * @param {*} onSuccess 

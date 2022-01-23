@@ -167,7 +167,7 @@ app.prepare().then(async () => {
     try {
       const dataplaneUrl = ctx.request.query.url;
       const shop = ctx.get("shop");
-      updateRudderWebhooks(dataplaneUrl, shop);
+      await updateRudderWebhooks(dataplaneUrl, shop);
       ctx.body = { success: true };
       ctx.status = 200;
     } catch (error) {
@@ -187,10 +187,10 @@ app.prepare().then(async () => {
       ctx.body = {
         rudderWebhookUrl: rudderWebhookUrl,
       };
-      ctx.res.statusCode = 200;
+      ctx.status = 200;
     } catch (error) {
       console.log(`Failed to fetch dataplane: ${error}`);
-      ctx.res.statusCode = 500;
+      ctx.status = 500;
     }
     return ctx;
   });
