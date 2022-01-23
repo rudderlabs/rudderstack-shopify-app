@@ -53,13 +53,13 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
   const { accessToken, webhooks: registeredWebhooks } = currentConfig;
   console.log("REGISTERED WEBHOOKS", registeredWebhooks);
   
-  const updatedWebhooks = [];
+  // const updatedWebhooks = [];
   let failedStatus = false;
   await Promise.all(registeredWebhooks.map(async ({ webhookId, topic }) => {
     try {
       const webhookUrl = embedTopicInUrl(rudderWebhookUrl, topic);
       const updatedId = await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
-      updatedWebhooks.push({ webhookId: updatedId, topic });
+      // updatedWebhooks.push({ webhookId: updatedId, topic });
       console.log(`Updated webhook - ${webhookId} ${topic}`);
     } catch (err) {
       console.log(`error while updating webhooks: ${err}`)
@@ -76,7 +76,7 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
     config: {
       ...currentConfig,
       rudderWebhookUrl,
-      webhooks: updatedWebhooks
+      // webhooks: updatedWebhooks
     }
   };
   await dbUtils.updateShopInfo(shop, udpatedInfo);
