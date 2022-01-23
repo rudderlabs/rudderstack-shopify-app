@@ -54,12 +54,22 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
   console.log("REGISTERED WEBHOOKS", registeredWebhooks);
   
   const updatedWebhooks = [];
+  let failedStatus = false;
   await Promise.all(registeredWebhooks.map(async ({ webhookId, topic }) => {
+    try {
       const webhookUrl = embedTopicInUrl(rudderWebhookUrl, topic);
       const updatedId = await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
       updatedWebhooks.push({ webhookId: updatedId, topic });
       console.log(`Updated webhook - ${webhookId} ${topic}`);
-    }));
+    } catch (err) {
+      console.log(`error while updating webhooks: ${err}`)
+      failedStatus = true;
+    }
+  }));
+
+  if (failedStatus) {
+    throw new Error("update webhooks failed");
+  }
 
   const udpatedInfo = {
     shopname: shop,
@@ -82,14 +92,26 @@ export const registerRudderWebhooks = async (rudderWebhookUrl, shop) => {
   const currentConfig = await dbUtils.getConfigByShop(shop);
   const topics = getTopicMapping();
   const webhooks = [];
+
+  let failedStatus = false;
   await Promise.all(Object.entries(topics).map(async ([topicKey, topicValue]) => {
-    const finalWebhookUrl = embedTopicInUrl(rudderWebhookUrl, `${topicKey}`).href;
-    const webhookId = await registerWebhooks(
-      finalWebhookUrl, topicValue, shop, currentConfig.accessToken
-    );
-    webhooks.push({webhookId, topic: topicKey});
+    try {
+      const finalWebhookUrl = embedTopicInUrl(rudderWebhookUrl, `${topicKey}`).href;
+      const webhookId = await registerWebhooks(
+        finalWebhookUrl, topicValue, shop, currentConfig.accessToken
+      );
+      webhooks.push({webhookId, topic: topicKey});
+    } catch (err) {
+      console.log(`error while registering webhooks: ${err}`);
+      failedStatus = true;
+    }
   }));
 
+  if (failedStatus) {
+    console.log("register webhook failed");
+    throw new Error("register webhook failed");
+  }
+  
   console.log("Registered webhook id", webhooks);
   
   // save webhook ids in DB
