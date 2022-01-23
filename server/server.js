@@ -1,6 +1,7 @@
 import "@babel/polyfill";
 import dotenv from "dotenv";
 import "isomorphic-fetch";
+import mongoose from "mongoose";
 import createShopifyAuth, { verifyRequest } from "@shopify/koa-shopify-auth";
 import Shopify, { ApiVersion } from "@shopify/shopify-api";
 import Koa from "koa";
@@ -198,12 +199,12 @@ app.prepare().then(async () => {
   router.get("/health", (ctx) => {
     let response = "Not ready";
     let status = 400;
-    if (dbConnected) {
+    if (dbConnected && mongoose.connection.readyState === 1) {
       response = "OK";
       status = 200;
     }
-    ctx.response.body = "OK";
-    ctx.status = 200;
+    ctx.response.body = response;
+    ctx.status = status;
     return ctx;
   });
 
