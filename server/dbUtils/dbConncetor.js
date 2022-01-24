@@ -8,11 +8,11 @@ export class DBConnector {
   static setConfigFromEnv() {
     const dbConObject = new DBConnector();
     dbConObject.config = {
-      PASSWORD: process.env.APP_CONFIG_PASSWORD,
-      DB_NAME: process.env.APP_CONFIG_DB_NAME,
-      USERNAME: process.env.APP_CONFIG_USERNAME,
-      HOST: process.env.APP_CONFIG_HOST,
-      PORT: process.env.APP_CONFIG_PORT
+      PASSWORD: process.env.DB_PASSWORD,
+      DB_NAME: process.env.DB_NAME,
+      USERNAME: process.env.DB_USER,
+      HOST: process.env.DB_HOST,
+      PORT: process.env.DB_PORT
     }
     return dbConObject;
   }
