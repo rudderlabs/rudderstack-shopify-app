@@ -208,6 +208,14 @@ app.prepare().then(async () => {
     return ctx;
   });
 
+  router.post("/shop/redact", async ctx => {
+    console.log(ctx.request.body);
+    const { shop_domain } = ctx.request.body;
+    await dbUtils.deleteShopInfo(shop_domain);
+    ctx.status = 200;
+    return ctx;
+  });
+
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("(.*)", async (ctx) => {
