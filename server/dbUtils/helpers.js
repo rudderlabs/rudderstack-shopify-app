@@ -36,58 +36,6 @@ const updateShopInfo = async (shop, updateData) => {
   console.log('Shop info updated');
 }
 
-// if on load is true, we only want to update the accessToken.
-// if on load is false, we insert or update the whole data
-// const upsertIntoTable = async (shop, accessToken, onLoad, webhookList, dataPlaneUrl) => {
-//   const existingData = await StoreConfig.findOne({ shopname: shop });
-//   if (!existingData) {
-//     // insert whole
-//     const insertData = {
-//       shopname: shop,
-//       config: {
-//         accessToken,
-//         rudderWebhookUrl,
-//         webhooks: webhookList || []
-//       }
-//     };
-//     await StoreConfig.findOneAndUpdate(
-//       { shopname: shop },
-//       insertData,
-//       { upsert: true }
-//     );
-//     console.log("inserted data in shop")
-//     return;
-//   }
-
-//   // data exists
-//   // if onLoad, only update the accessToken
-//   if (onLoad) {
-//     const updateData = Object.assign({}, existingData);
-//     updateData.config = {
-//       ...existingData.config,
-//       accessToken
-//     }
-//     await StoreConfig.findOneAndUpdate({ shop }, updateData);
-//     console.log("updated only access token for shop");
-//     return;
-//   }
-  
-//   // update all fields
-//   await StoreConfig.findOneAndUpdate(
-//     { shopname: shop },
-//     {
-//       shopname: shop,
-//       config: {
-//         accessToken,
-//         dataPlaneUrl,
-//         webhooks: webhookList || []
-//       }
-//     }
-//   );
-
-//   console.log('Shop Update all fields success');
-// };
-
 const deleteShopInfo = async (shop) => {
   await StoreConfig.findOneAndDelete(
     { shopname: shop }
