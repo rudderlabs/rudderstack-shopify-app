@@ -36,7 +36,7 @@ const updateShopInfo = async (shop, updateData) => {
   console.log('Shop info updated');
 }
 
-// if on load is true, we only want to udpate the accessToken.
+// if on load is true, we only want to update the accessToken.
 // if on load is false, we insert or update the whole data
 // const upsertIntoTable = async (shop, accessToken, onLoad, webhookList, dataPlaneUrl) => {
 //   const existingData = await StoreConfig.findOne({ shopname: shop });

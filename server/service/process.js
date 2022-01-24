@@ -58,7 +58,7 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
   await Promise.all(registeredWebhooks.map(async ({ webhookId, topic }) => {
     try {
       const webhookUrl = embedTopicInUrl(rudderWebhookUrl, topic);
-      const updatedId = await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
+      // const updatedId = await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
       // updatedWebhooks.push({ webhookId: updatedId, topic });
       console.log(`Updated webhook - ${webhookId} ${topic}`);
     } catch (err) {
@@ -71,7 +71,7 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
     throw new Error("update webhooks failed");
   }
 
-  const udpatedInfo = {
+  const updatedInfo = {
     shopname: shop,
     config: {
       ...currentConfig,
@@ -79,7 +79,7 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
       // webhooks: updatedWebhooks
     }
   };
-  await dbUtils.updateShopInfo(shop, udpatedInfo);
+  await dbUtils.updateShopInfo(shop, updatedInfo);
   console.log("Webhooks saved to DB");
 };
 
@@ -115,7 +115,7 @@ export const registerRudderWebhooks = async (rudderWebhookUrl, shop) => {
   console.log("Registered webhook id", webhooks);
   
   // save webhook ids in DB
-  const udpatedInfo = {
+  const updatedInfo = {
     shopname: shop,
     config: {
       ...currentConfig,
@@ -123,7 +123,7 @@ export const registerRudderWebhooks = async (rudderWebhookUrl, shop) => {
       webhooks
     }
   };
-  await dbUtils.updateShopInfo(shop, udpatedInfo);
+  await dbUtils.updateShopInfo(shop, updatedInfo);
   console.log("Webhooks saved to DB");
 };
 
