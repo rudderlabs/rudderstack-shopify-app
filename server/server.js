@@ -12,7 +12,7 @@ import {
   updateRudderWebhooks,
   fetchRudderWebhookUrl,
 } from "./service/process";
-import { DBConnector } from "./dbUtils/dbConncetor";
+import { DBConnector } from "./dbUtils/dbConnector";
 import { dbUtils } from "./dbUtils/helpers";
 
 dotenv.config();
