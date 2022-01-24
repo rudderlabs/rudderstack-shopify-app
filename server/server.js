@@ -203,7 +203,7 @@ app.prepare().then(async () => {
       response = "OK";
       status = 200;
     }
-    ctx.response.body = response;
+    ctx.body = response;
     ctx.status = status;
     return ctx;
   });
