@@ -208,10 +208,30 @@ app.prepare().then(async () => {
     return ctx;
   });
 
+  // GDPR mandatory route. Deleting shop information here
   router.post("/shop/redact", async ctx => {
     console.log(ctx.request.body);
     const { shop_domain } = ctx.request.body;
     await dbUtils.deleteShopInfo(shop_domain);
+    ctx.body = "OK";
+    ctx.status = 200;
+    return ctx;
+  });
+
+  // GDPR mandatory route. RudderStack is not storing any customer releated
+  // information.
+  router.post("/customers/data_request", async ctx => {
+    console.log(ctx.request.body);
+    ctx.body = "OK";
+    ctx.status = 200;
+    return ctx;
+  });
+  
+  // GDPR mandatory route. RudderStack is not storing any customer releated
+  // information.
+  router.post("/customers/redact", async ctx => {
+    console.log(ctx.request.body);
+    ctx.body = "OK";
     ctx.status = 200;
     return ctx;
   });
