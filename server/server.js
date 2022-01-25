@@ -102,9 +102,11 @@ app.prepare().then(async () => {
           webhookHandler: async (topic, shop, body) => {
             delete ACTIVE_SHOPIFY_SHOPS[shop];
             console.log("this should be called on uninstall");
-            await dbUtils.deleteShopInfo(shop);
+            // await dbUtils.deleteShopInfo(shop);
           },
         });
+
+        console.log("RESPONSE ", JSON.stringify(response));
 
         if (!response.success) {
           console.log(
@@ -131,11 +133,14 @@ app.prepare().then(async () => {
       console.log("CTX QUERY", JSON.stringify(ctx.request.query));
       console.log("CTX", JSON.stringify(ctx));
       await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
-      // const { shop } = ctx.request.query;
-      // await dbUtils.deleteShopInfo(shop);
+      const { shop } = ctx.request.query;
+      await dbUtils.deleteShopInfo(shop);
       console.log(`Webhook processed, returned status code 200`);
+      ctx.body = "OK";
+      ctx.status = 200;
+      return ctx;
     } catch (error) {
-      console.log(`Failed to register uninstall webhook: ${error}`);
+      console.log(`Call to /webhooks failed: ${error}`);
     }
   });
 
