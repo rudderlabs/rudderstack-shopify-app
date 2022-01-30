@@ -29,7 +29,7 @@ export class DBConnector {
       options = {
         ssl: true,
         sslValidate: true,
-        sslCA: process.env.SSL_CA_PATH
+        sslCA: process.env.DB_SSL_CA_PATH
       };
       connectionUrl = `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`
       
