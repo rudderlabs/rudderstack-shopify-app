@@ -77,21 +77,26 @@ app.prepare().then(async () => {
         console.log(`The token is ${accessToken}`);
         console.log("inside Shopify afterAuth");
 
-        const currentShopInfo = await dbUtils.getDataByShop(shop);
-        if (currentShopInfo) {
-          // update only access token if shop entry exists
-          currentShopInfo.config.accessToken = accessToken;
-          await dbUtils.updateShopInfo(shop, currentShopInfo);
-        } else {
-          // make new entry for shop info
-          const newShopInfo = {
-            shopname: shop,
-            config: {
-              accessToken,
-            },
-          };
-          console.log("inserting shop info");
-          await dbUtils.insertShopInfo(newShopInfo);
+        try {
+          const currentShopInfo = await dbUtils.getDataByShop(shop);
+          if (currentShopInfo) {
+            // update only access token if shop entry exists
+            currentShopInfo.config.accessToken = accessToken;
+            await dbUtils.updateShopInfo(shop, currentShopInfo);
+          } else {
+            // make new entry for shop info
+            const newShopInfo = {
+              shopname: shop,
+              config: {
+                accessToken,
+              },
+            };
+            console.log("inserting shop info");
+            await dbUtils.insertShopInfo(newShopInfo);
+          }
+        } catch (err) {
+          // TODO: setup alerts
+          console.log(`error while querying DB: ${err}`);
         }
 
         const response = await Shopify.Webhooks.Registry.register({
