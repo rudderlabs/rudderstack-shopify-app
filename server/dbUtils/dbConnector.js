@@ -25,7 +25,7 @@ export class DBConnector {
     let connectionUrl = `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?retryWrites=true&w=majority`
     let options = {};
 
-    if (process.env.MODE === 'production') {
+    if (!process.env.MODE || process.env.MODE !== 'local') {
       options = {
         ssl: true,
         sslValidate: true,

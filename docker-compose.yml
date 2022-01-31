@@ -43,4 +43,6 @@ services:
       DB_NAME: shopify_new_db
       DB_USER: rudder
       DB_PASSWORD: password
+      MODE: local
+      DB_SSL_CA_PATH: /path/to/pem
     
