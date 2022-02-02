@@ -86,9 +86,15 @@ const parseInfoFromAddress = (address) => {
  */
 export const formatInputs = (url, writeKey) => {
   let formattedUrl = url.trim();
+  
+  if (formattedUrl.startsWith('http://')) {
+    formattedUrl = formattedUrl.slice('http://'.length);
+  }
+  
   if (!(formattedUrl.startsWith('http://') || formattedUrl.startsWith('https://'))) {
     formattedUrl = `https://${formattedUrl}`;
   }
+
   if (formattedUrl.endsWith('/')) {
     formattedUrl = formattedUrl.slice(0, formattedUrl.length - 1);
   }
