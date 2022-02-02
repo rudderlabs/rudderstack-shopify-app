@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import StoreConfig from "./models/storeConfig"
 
 const getDataByShop = async (shop) => {
+  console.log("Inside shop getData function");
   const storeInfo = await StoreConfig.findOne({ shopname: shop });
   console.log("Store Info ", storeInfo);
   return storeInfo;
@@ -21,6 +22,7 @@ const getConfigByShop = async (shop) => {
 };
 
 const insertShopInfo = async (shopData) => {
+  console.log("Inside shop insert function");
   await StoreConfig.create({
     ...shopData,
     _id: mongoose.Types.ObjectId()
@@ -29,6 +31,7 @@ const insertShopInfo = async (shopData) => {
 };
 
 const updateShopInfo = async (shop, updateData) => {
+  console.log("Inside shop update function");
   await StoreConfig.findOneAndUpdate(
     { shopname: shop},
     updateData
@@ -37,6 +40,7 @@ const updateShopInfo = async (shop, updateData) => {
 }
 
 const deleteShopInfo = async (shop) => {
+  console.log("Inside shop delete function");
   await StoreConfig.findOneAndDelete(
     { shopname: shop }
   );

@@ -32,7 +32,7 @@ DBConnector.setConfigFromEnv()
   })
   .catch((err) => {
     console.log(`DB connection Failed: ${err}`);
-    process.exit();
+    process.exit(1);
   });
 
 const REQUIRED_SCOPES = [
@@ -207,6 +207,7 @@ app.prepare().then(async () => {
   });
 
   router.get("/health", (ctx) => {
+    verifyRequest({ returnHeader: true });
     let response = "Not ready";
     let status = 400;
     if (dbConnected && mongoose.connection.readyState === 1) {
@@ -220,7 +221,8 @@ app.prepare().then(async () => {
 
   // GDPR mandatory route. Deleting shop information here
   router.post("/shop/redact", async ctx => {
-    console.log(ctx.request.body);
+    verifyRequest({ returnHeader: true });
+    // console.log(JSON.stringify(ctx));
     const { shop_domain } = ctx.request.body;
     await dbUtils.deleteShopInfo(shop_domain);
     ctx.body = "OK";
@@ -231,7 +233,7 @@ app.prepare().then(async () => {
   // GDPR mandatory route. RudderStack is not storing any customer releated
   // information.
   router.post("/customers/data_request", async ctx => {
-    console.log(ctx.request.body);
+    verifyRequest({ returnHeader: true });
     ctx.body = "OK";
     ctx.status = 200;
     return ctx;
@@ -240,7 +242,7 @@ app.prepare().then(async () => {
   // GDPR mandatory route. RudderStack is not storing any customer releated
   // information.
   router.post("/customers/redact", async ctx => {
-    console.log(ctx.request.body);
+    verifyRequest({ returnHeader: true });
     ctx.body = "OK";
     ctx.status = 200;
     return ctx;
@@ -249,12 +251,24 @@ app.prepare().then(async () => {
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("(.*)", async (ctx) => {
+    
+    console.log("INSIDE THIS ROUTE");
+    
     const shop = ctx.query.shop;
+    if (!shop) {
+      ctx.body = "Shop info is required";
+      ctx.status = 400;
+      return ctx;
+    }
+
+    console.log("ACTIVE_SHOPIFY_SHOPS, shop", ACTIVE_SHOPIFY_SHOPS, shop);
 
     // This shop hasn't been seen yet, go through OAuth to create a session
-    if (ACTIVE_SHOPIFY_SHOPS[shop] === undefined) {
+    if (ACTIVE_SHOPIFY_SHOPS[shop] === undefined || !ctx.query.host) {
+      console.log("redirecting to auth/shop");
       ctx.redirect(`/auth?shop=${shop}`);
     } else {
+      console.log("going to handleRequest");
       await handleRequest(ctx);
     }
   });
