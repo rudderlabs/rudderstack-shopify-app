@@ -58,7 +58,7 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
   await Promise.all(registeredWebhooks.map(async ({ webhookId, topic }) => {
     try {
       const webhookUrl = embedTopicInUrl(rudderWebhookUrl, topic);
-      // const updatedId = await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
+      await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
       // updatedWebhooks.push({ webhookId: updatedId, topic });
       console.log(`Updated webhook - ${webhookId} ${topic}`);
     } catch (err) {
