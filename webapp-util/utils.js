@@ -20,14 +20,14 @@
     const responseData = await response.json();
     console.log("response body", responseData);
     if (responseData.success) {
-      onSuccess("Updated webhooks");
+      onSuccess("Updated");
     } else {
       onError(responseData.error);  
     }
   } catch (err) {
     // failsafety error handling
     console.log(`error: ${err}`)
-    onError(`Update webhook Failed. ${err.message}`);
+    onError(`Update Failed. ${err.message}`);
   }
 };
 
@@ -53,14 +53,14 @@ export const registerWebHooks = async (url, token, onSuccess, onError) => {
     const responseData = await response.json();
     console.log("response body", responseData);
     if (responseData.success) {
-      onSuccess("Registered webhooks");
+      onSuccess("Registered");
     } else {
       onError(responseData.error);  
     }
   } catch (err) {
     // failsafety error handling
     console.log(`error: ${err}`)
-    onError(`Register webhook Failed. ${err.message}`);
+    onError(`Register Failed. ${err.message}`);
   }
 };
 

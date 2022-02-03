@@ -4,6 +4,8 @@ import {
   fetchWebhooks,
   removeWebhooks,
   updateWebhooks,
+  registerScriptTag,
+  updateScriptTag
 } from "../webhooks/helper";
 import { dbUtils } from "../dbUtils/helpers";
 
@@ -58,7 +60,7 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
   await Promise.all(registeredWebhooks.map(async ({ webhookId, topic }) => {
     try {
       const webhookUrl = embedTopicInUrl(rudderWebhookUrl, topic);
-      // const updatedId = await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
+      const updatedId = await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
       // updatedWebhooks.push({ webhookId: updatedId, topic });
       console.log(`Updated webhook - ${webhookId} ${topic}`);
     } catch (err) {
@@ -126,6 +128,123 @@ export const registerRudderWebhooks = async (rudderWebhookUrl, shop) => {
   await dbUtils.updateShopInfo(shop, updatedInfo);
   console.log("Webhooks saved to DB");
 };
+
+/**
+ * calls webhook register endpoint and script tag api endpoint
+ * for the given rudder webhook source url
+ * @param {*} rudderWebhookUrl 
+ * @param {*} shop 
+ */
+export const registerWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
+  const currentConfig = await dbUtils.getConfigByShop(shop);
+  const topics = getTopicMapping();
+  const webhooks = [];
+
+  let webhookRegisterFailed = false;
+  await Promise.all(Object.entries(topics).map(async ([topicKey, topicValue]) => {
+    try {
+      const finalWebhookUrl = embedTopicInUrl(rudderWebhookUrl, `${topicKey}`).href;
+      const webhookId = await registerWebhooks(
+        finalWebhookUrl, topicValue, shop, currentConfig.accessToken
+      );
+      webhooks.push({webhookId, topic: topicKey});
+    } catch (err) {
+      console.log(`error while registering webhooks: ${err}`);
+      webhookRegisterFailed = true;
+    }
+  }));
+
+  let scriptTagFailed = false;
+  let resp;
+  try {
+    resp = await registerScriptTag(currentConfig.accessToken, rudderWebhookUrl, shop);
+  } catch (err) {
+    console.log(`script tag register failure: ${err}`);
+    scriptTagFailed = true;
+  }
+  
+  let updatedInfo = {
+    shopname: shop,
+    config: {}
+  };
+  if (!webhookRegisterFailed) {
+    updatedInfo.config = {
+      ...currentConfig,
+      rudderWebhookUrl,
+      webhooks
+    };
+  }
+
+  if (!scriptTagFailed) {
+    updatedInfo.config.scriptTagId = resp.script_tag.id;
+  }
+
+  if (webhookRegisterFailed) {
+    console.log("register webhook failed");
+    throw new Error("register webhook failed");
+  }
+
+  if (scriptTagFailed) {
+    console.log("script tag register failed");
+    throw new Error("script tag register failed");
+  }
+  
+  console.log("Registered webhook id", webhooks);
+  console.log("Registered script tag", resp.script_tag);
+  
+  // save to DB only if both succeeds
+  await dbUtils.updateShopInfo(shop, updatedInfo);
+  console.log("Webhooks saved to DB");
+};
+
+export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
+  const currentConfig = await dbUtils.getConfigByShop(shop);
+  const { accessToken, webhooks: registeredWebhooks } = currentConfig;
+  console.log("REGISTERED WEBHOOKS", registeredWebhooks);
+  
+  // const updatedWebhooks = [];
+  let updateWebhookFailed = false;
+  await Promise.all(registeredWebhooks.map(async ({ webhookId, topic }) => {
+    try {
+      const webhookUrl = embedTopicInUrl(rudderWebhookUrl, topic);
+      await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
+      // updatedWebhooks.push({ webhookId: updatedId, topic });
+      console.log(`Updated webhook - ${webhookId} ${topic}`);
+    } catch (err) {
+      console.log(`error while updating webhooks: ${err}`)
+      updateWebhookFailed = true;
+    }
+  }));
+  
+  let updateScriptFailed = false;
+  try {
+    await updateScriptTag(accessToken, rudderWebhookUrl, shop, currentConfig.scriptTagId);
+  } catch (err) {
+    updateScriptFailed = true
+    console.log("script tag update failed ", err);
+  }
+
+  if (updateWebhookFailed) {
+    throw new Error("update webhooks failed");
+  }
+
+  const updatedInfo = {
+    shopname: shop,
+    config: {
+      ...currentConfig,
+      rudderWebhookUrl,
+      // webhooks: updatedWebhooks
+    }
+  };
+  await dbUtils.updateShopInfo(shop, updatedInfo);
+  console.log("DB Updated for update call");
+
+  if (updateScriptFailed) {
+    throw new Error("script tag update failed");
+  }
+};
+
+
 
 /**
  * Returns the first found rudder registered webhook for the shop

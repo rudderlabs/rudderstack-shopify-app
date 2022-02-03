@@ -44,6 +44,58 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
   console.log("RESPONSE", JSON.stringify(response.body));
   return response.body.webhook.id;
 };
+
+
+/**
+ * Call to Script Tag Endpoint loads the shopify tracking code in the store pages
+ * @param {*} rudderWebhookUrl 
+ * @param {*} shop 
+ */
+export const registerScriptTag = async (accessToken, rudderWebhookUrl, shop) => {
+  const wrappedUrl = new URL(rudderWebhookUrl);
+  const writeKey = wrappedUrl.searchParams.get('writeKey');
+  const dataPlane = wrappedUrl.hostname;
+  const cdnBaseUrl = process.env.SHOPIFY_TRACKER_URL || 'shopify-tracker.dev-rudder.rudderlabs.com';
+  const scriptTagUrl = `https:\/\/${cdnBaseUrl}\/load?writeKey=${writeKey}&dataPlaneUrl=${dataPlane}`;
+
+  const client = new Shopify.Clients.Rest(shop, accessToken);
+  const response = await client.post({
+    path: 'script_tags',
+    data: {"script_tag":{"event":"onload","src": scriptTagUrl }},
+    type: DataType.JSON,
+  });
+
+  console.log("Script tag endpoint called", response.body);
+  return response.body;
+};
+
+/**
+ * update call to script tag api endpoint
+ * @param {*} accessToken 
+ * @param {*} rudderWebhookUrl 
+ * @param {*} shop 
+ * @param {*} scriptTagId 
+ * @returns 
+ */
+export const updateScriptTag = async (accessToken, rudderWebhookUrl, shop, scriptTagId) => {
+  const wrappedUrl = new URL(rudderWebhookUrl);
+  const writeKey = wrappedUrl.searchParams.get('writeKey');
+  const dataPlane = wrappedUrl.hostname;
+  const cdnBaseUrl = process.env.SHOPIFY_TRACKER_URL || 'shopify-tracker.dev-rudder.rudderlabs.com';
+  const scriptTagUrl = `https:\/\/${cdnBaseUrl}\/load?writeKey=${writeKey}&dataPlaneUrl=${dataPlane}`;
+
+  const client = new Shopify.Clients.Rest(shop, accessToken);
+  const response = await client.put({
+    path: `script_tags/${scriptTagId}`,
+    data: {"script_tag":{"event":"onload","src": scriptTagUrl }},
+    type: DataType.JSON,
+  });
+
+  console.log("Script tag endpoint called", response.body);
+  return response.body;
+};
+
+
 /**
  * Updates webhook subscription to specified address
  * @param {*} webhookId 

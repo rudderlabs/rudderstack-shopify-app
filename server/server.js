@@ -11,6 +11,8 @@ import {
   registerRudderWebhooks,
   updateRudderWebhooks,
   fetchRudderWebhookUrl,
+  registerWebhooksAndScriptTag,
+  updateWebhooksAndScriptTag,
 } from "./service/process";
 import { DBConnector } from "./dbUtils/dbConnector";
 import { dbUtils } from "./dbUtils/helpers";
@@ -45,6 +47,8 @@ const REQUIRED_SCOPES = [
   "write_orders",
   "read_fulfillments",
   "write_fulfillments",
+  "read_script_tags",
+  "write_script_tags"
 ];
 
 Shopify.Context.initialize({
@@ -159,15 +163,16 @@ app.prepare().then(async () => {
 
   router.get("/register/webhooks", async (ctx) => {
     verifyRequest({ returnHeader: true });
+    const rudderWebhookUrl = ctx.request.query.url
+    const shop = ctx.get("shop");
+
     try {
-      const dataplaneUrl = ctx.request.query.url;
-      const shop = ctx.get("shop");
-      await registerRudderWebhooks(dataplaneUrl, shop);
+      await registerWebhooksAndScriptTag(rudderWebhookUrl, shop);
       ctx.body = { success: true };
       ctx.status = 200;
-    } catch (error) {
-      console.log(`Failed to process webhook registry: ${error}`);
-      ctx.body = { success: false, error: "Register Webhooks Failed" };
+    } catch (err) {
+      console.log("error in /register/webhooks ", err);
+      ctx.body = { success: false, error: err.message };
       ctx.status = 500;
     }
     return ctx;
@@ -176,14 +181,14 @@ app.prepare().then(async () => {
   router.get("/update/webhooks", async (ctx) => {
     verifyRequest({ returnHeader: true });
     try {
-      const dataplaneUrl = ctx.request.query.url;
+      const rudderWebhookUrl = ctx.request.query.url;
       const shop = ctx.get("shop");
-      await updateRudderWebhooks(dataplaneUrl, shop);
+      await updateWebhooksAndScriptTag(rudderWebhookUrl, shop);
       ctx.body = { success: true };
       ctx.status = 200;
-    } catch (error) {
-      console.log(`Failed to process webhook updates: ${error}`);
-      ctx.body = { success: false, error: "Updated Webhooks failed" };
+    } catch (err) {
+      console.log("error in /update/webhooks ", err);
+      ctx.body = { success: false, error: err.message };
       ctx.status = 500;
     }
     return ctx;
