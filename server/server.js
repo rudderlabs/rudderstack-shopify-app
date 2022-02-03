@@ -7,9 +7,8 @@ import Shopify, { ApiVersion } from "@shopify/shopify-api";
 import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
+import bodyParser from "koa-body-parser";
 import {
-  registerRudderWebhooks,
-  updateRudderWebhooks,
   fetchRudderWebhookUrl,
   registerWebhooksAndScriptTag,
   updateWebhooksAndScriptTag,
@@ -70,6 +69,7 @@ app.prepare().then(async () => {
   const server = new Koa();
   const router = new Router();
   server.keys = [Shopify.Context.API_SECRET_KEY];
+  server.use(bodyParser());
   server.use(
     createShopifyAuth({
       accessMode: "offline",
@@ -141,15 +141,16 @@ app.prepare().then(async () => {
       console.log("CTX BODY", JSON.stringify(ctx.request.body));
       console.log("CTX QUERY", JSON.stringify(ctx.request.query));
       console.log("CTX", JSON.stringify(ctx));
-      await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
       const { shop } = ctx.request.query;
       await dbUtils.deleteShopInfo(shop);
       console.log(`Webhook processed, returned status code 200`);
+      await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
       ctx.body = "OK";
       ctx.status = 200;
       return ctx;
     } catch (error) {
       console.log(`Call to /webhooks failed: ${error}`);
+      ctx.status = 500;
     }
   });
 
@@ -227,7 +228,6 @@ app.prepare().then(async () => {
   // GDPR mandatory route. Deleting shop information here
   router.post("/shop/redact", async ctx => {
     verifyRequest({ returnHeader: true });
-    // console.log(JSON.stringify(ctx));
     const { shop_domain } = ctx.request.body;
     await dbUtils.deleteShopInfo(shop_domain);
     ctx.body = "OK";
