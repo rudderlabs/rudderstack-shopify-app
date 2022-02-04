@@ -1,5 +1,6 @@
 import Shopify, { DataType } from "@shopify/shopify-api";
 import { topicMapping } from "../constants/topic-mapping";
+import { dbUtils } from "../dbUtils/helpers";
 
 /**
  * Returns all the topics for subscription
@@ -105,6 +106,7 @@ export const updateScriptTag = async (accessToken, rudderWebhookUrl, shop, scrip
 export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) => {
   const client = new Shopify.Clients.Rest(shop, accessToken);
 
+  console.log("inside update function");
   const webhookToUpdate = {
     id: webhookId,
     address: webhookUrl,
@@ -116,5 +118,42 @@ export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) =
     },
     type: DataType.JSON,
   });
+
+  console.log("RESPONSE", response);
   return response.body.webhook.id;
 };
+
+/**
+ * Verify uninstallation callback and then delete from DB
+ * @param {*} shop 
+ * @returns 
+ */
+export const verifyAndDelete = async (shop) => {
+  try {
+    const config = await dbUtils.getConfigByShop(shop);
+    if (!config || !config.accessToken) {
+      console.log(`[verifyAndDelete] config not found for shop: ${shop}`);
+      return;
+    }
+    const { accessToken } = config;
+    let invalidated = false;
+    
+    const client = new Shopify.Clients.Rest(shop, accessToken);
+    try {
+      await client.get({ path: "webhooks/count" });
+    } catch (err) {
+      console.log("[verifyAndDelete] error ", err);
+      invalidated = true;
+    }
+
+    // check if token is invalidated and set it
+    if (invalidated) {
+      await dbUtils.deleteShopInfo(shop);
+    } else {
+      console.log("random uninstall called");
+      // shopify random uninstall call. simply ignore
+    }
+  } catch (error) {
+    console.log(`[verifyAndDelete] error: ${error}`);
+  }
+}

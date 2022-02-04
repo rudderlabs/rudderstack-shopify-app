@@ -17,6 +17,9 @@ const shopExists = async (shop) => {
 }
 
 const getConfigByShop = async (shop) => {
+  if (!shop) {
+    return null;
+  }
   const storeInfo = await getDataByShop(shop);
   return storeInfo ? storeInfo.config : null;
 };

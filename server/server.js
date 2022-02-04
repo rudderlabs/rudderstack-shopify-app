@@ -11,10 +11,11 @@ import bodyParser from "koa-body-parser";
 import {
   fetchRudderWebhookUrl,
   registerWebhooksAndScriptTag,
-  updateWebhooksAndScriptTag,
+  updateWebhooksAndScriptTag
 } from "./service/process";
 import { DBConnector } from "./dbUtils/dbConnector";
 import { dbUtils } from "./dbUtils/helpers";
+import { verifyAndDelete } from "./webhooks/helper";
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -111,7 +112,7 @@ app.prepare().then(async () => {
           webhookHandler: async (topic, shop, body) => {
             delete ACTIVE_SHOPIFY_SHOPS[shop];
             console.log("this should be called on uninstall");
-            // await dbUtils.deleteShopInfo(shop);
+            // verifyAndDelete(shop);
           },
         });
 
@@ -141,8 +142,9 @@ app.prepare().then(async () => {
       console.log("CTX BODY", JSON.stringify(ctx.request.body));
       console.log("CTX QUERY", JSON.stringify(ctx.request.query));
       console.log("CTX", JSON.stringify(ctx));
+      
       const { shop } = ctx.request.query;
-      await dbUtils.deleteShopInfo(shop);
+      verifyAndDelete(shop);
       console.log(`Webhook processed, returned status code 200`);
       await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
       ctx.body = "OK";
@@ -162,8 +164,8 @@ app.prepare().then(async () => {
     }
   );
 
-  router.get("/register/webhooks", async (ctx) => {
-    verifyRequest({ returnHeader: true });
+  router.get("/register/webhooks", verifyRequest({ 
+    returnHeader: true, accessMode: 'offline', }), async (ctx) => {
     const rudderWebhookUrl = ctx.request.query.url
     const shop = ctx.get("shop");
 
@@ -179,8 +181,8 @@ app.prepare().then(async () => {
     return ctx;
   });
 
-  router.get("/update/webhooks", async (ctx) => {
-    verifyRequest({ returnHeader: true });
+  router.get("/update/webhooks", verifyRequest({ 
+    returnHeader: true, accessMode: 'offline', }), async (ctx) => {
     try {
       const rudderWebhookUrl = ctx.request.query.url;
       const shop = ctx.get("shop");
@@ -195,8 +197,11 @@ app.prepare().then(async () => {
     return ctx;
   });
 
-  router.get("/fetch/rudder-webhook", async (ctx) => {
-    verifyRequest({ returnHeader: true });
+  router.get(
+    "/fetch/rudder-webhook", verifyRequest({
+      accessMode: 'offline',
+       returnHeader: true
+    }), async (ctx) => {
     try {
       const shop = ctx.get("shop");
       const rudderWebhookUrl = await fetchRudderWebhookUrl(shop);
@@ -213,7 +218,6 @@ app.prepare().then(async () => {
   });
 
   router.get("/health", (ctx) => {
-    verifyRequest({ returnHeader: true });
     let response = "Not ready";
     let status = 400;
     if (dbConnected && mongoose.connection.readyState === 1) {
@@ -226,8 +230,8 @@ app.prepare().then(async () => {
   });
 
   // GDPR mandatory route. Deleting shop information here
-  router.post("/shop/redact", async ctx => {
-    verifyRequest({ returnHeader: true });
+  router.post("/shop/redact", verifyRequest({
+     returnHeader: true, accessMode: 'offline', }), async ctx => {
     const { shop_domain } = ctx.request.body;
     await dbUtils.deleteShopInfo(shop_domain);
     ctx.body = "OK";
@@ -237,8 +241,8 @@ app.prepare().then(async () => {
 
   // GDPR mandatory route. RudderStack is not storing any customer releated
   // information.
-  router.post("/customers/data_request", async ctx => {
-    verifyRequest({ returnHeader: true });
+  router.post("/customers/data_request", verifyRequest({ 
+    returnHeader: true, accessMode: 'offline', }), async ctx => {
     ctx.body = "OK";
     ctx.status = 200;
     return ctx;
@@ -246,8 +250,8 @@ app.prepare().then(async () => {
   
   // GDPR mandatory route. RudderStack is not storing any customer releated
   // information.
-  router.post("/customers/redact", async ctx => {
-    verifyRequest({ returnHeader: true });
+  router.post("/customers/redact", verifyRequest({ 
+    returnHeader: true, accessMode: 'offline', }), async ctx => {
     ctx.body = "OK";
     ctx.status = 200;
     return ctx;

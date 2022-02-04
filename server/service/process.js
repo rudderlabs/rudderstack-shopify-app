@@ -64,7 +64,7 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
       // updatedWebhooks.push({ webhookId: updatedId, topic });
       console.log(`Updated webhook - ${webhookId} ${topic}`);
     } catch (err) {
-      console.log(`error while updating webhooks: ${err}`)
+      console.log(`error while updating webhooks: ${err}`, err);
       failedStatus = true;
     }
   }));
@@ -243,8 +243,6 @@ export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
     throw new Error("script tag update failed");
   }
 };
-
-
 
 /**
  * Returns the first found rudder registered webhook for the shop
