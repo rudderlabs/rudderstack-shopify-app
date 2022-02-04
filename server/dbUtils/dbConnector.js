@@ -22,7 +22,6 @@ export class DBConnector {
     if (!this.config) {
       throw new Error('[DbConnector]:: Could not connect to DB. config not set.');
     }
-    
     let connectionUrl = `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?retryWrites=true&w=majority`;
     let options = {};
 
@@ -33,13 +32,12 @@ export class DBConnector {
         sslValidate: true,
         sslCA: process.env.DB_SSL_CA_PATH
       };
-      connectionUrl = `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`
-      
+      connectionUrl = `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`;
     }
-    
+
     console.log("calling connect");
     await mongoose.connect(
-      connectionUrl, 
+      connectionUrl,
       options
     );
   }

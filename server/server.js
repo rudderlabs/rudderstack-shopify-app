@@ -15,6 +15,10 @@ import {
 } from "./service/process";
 import { DBConnector } from "./dbUtils/dbConnector";
 import { dbUtils } from "./dbUtils/helpers";
+import { createServiceApp } from "@rudder/rudder-service";
+import serviceOptions from "./monitoring/serviceOptions";
+import { bugsnagClient } from "./monitoring/bugsnag";
+import { serviceRoutes } from '@rudder/rudder-service';
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -33,6 +37,7 @@ DBConnector.setConfigFromEnv()
   })
   .catch((err) => {
     console.log(`DB connection Failed: ${err}`);
+    bugsnagClient.notify("DB connection Failed.");
     process.exit(1);
   });
 
@@ -66,10 +71,14 @@ Shopify.Context.initialize({
 const ACTIVE_SHOPIFY_SHOPS = {};
 
 app.prepare().then(async () => {
-  const server = new Koa();
+  // const server = new Koa();
+  const server = createServiceApp(serviceOptions);
   const router = new Router();
   server.keys = [Shopify.Context.API_SECRET_KEY];
   server.use(bodyParser());
+
+  server.use(serviceRoutes());
+
   server.use(
     createShopifyAuth({
       accessMode: "offline",
@@ -214,10 +223,10 @@ app.prepare().then(async () => {
 
   router.get("/health", (ctx) => {
     verifyRequest({ returnHeader: true });
-    let response = "Not ready";
-    let status = 400;
+    let response = { server: "Up", db: "Down" };
+    let status = 500;
     if (dbConnected && mongoose.connection.readyState === 1) {
-      response = "OK";
+      response = { server: "Up", db: "Up" };
       status = 200;
     }
     ctx.body = response;
@@ -243,7 +252,7 @@ app.prepare().then(async () => {
     ctx.status = 200;
     return ctx;
   });
-  
+
   // GDPR mandatory route. RudderStack is not storing any customer releated
   // information.
   router.post("/customers/redact", async ctx => {
@@ -256,9 +265,9 @@ app.prepare().then(async () => {
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("(.*)", async (ctx) => {
-    
+
     console.log("INSIDE THIS ROUTE");
-    
+
     const shop = ctx.query.shop;
     if (!shop) {
       ctx.body = "Shop info is required";

@@ -22,6 +22,8 @@
     "@babel/polyfill": "^7.6.0",
     "@babel/preset-env": "^7.12.11",
     "@babel/register": "^7.12.10",
+    "@bugsnag/js": "^7.16.1",
+    "@rudder/rudder-service": "git+ssh://git@github.com/rudderlabs/rudder-service-node.git",
     "@shopify/app-bridge-react": "^2.0.6",
     "@shopify/app-bridge-utils": "^2.0.6",
     "@shopify/koa-shopify-auth": "^4.1.4",
