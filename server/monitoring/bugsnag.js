@@ -1,12 +1,3 @@
-// import fs from 'fs';
-// import Bugsnag from '@bugsnag/js';
-
-// let version = 'notset';
-// try {
-//     version = fs.readFileSync('./dist/.version.txt', 'utf8');
-// } catch (error) {
-//     logger.error(error);
-// }
 let version = '1.0.0';  // TODO: make this dynamic
 
 const bugsnag = {

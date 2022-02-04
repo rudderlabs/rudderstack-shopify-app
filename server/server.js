@@ -175,7 +175,7 @@ app.prepare().then(async () => {
     const rudderWebhookUrl = ctx.request.query.url
     const shop = ctx.get("shop");
 
-    bugsnagClient.notify(`register webhooks called: ${err}`); // TODO: remove this. using for test
+    bugsnagClient.notify(`register webhooks called`); // TODO: remove this. using for test
 
     try {
       await registerWebhooksAndScriptTag(rudderWebhookUrl, shop);
