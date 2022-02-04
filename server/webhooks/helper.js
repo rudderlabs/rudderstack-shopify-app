@@ -1,4 +1,5 @@
 import Shopify, { DataType } from "@shopify/shopify-api";
+import { bugsnagClient, logger } from "@rudder/rudder-service";
 import { topicMapping } from "../constants/topic-mapping";
 import { dbUtils } from "../dbUtils/helpers";
 
@@ -149,9 +150,12 @@ export const verifyAndDelete = async (shop) => {
     // check if token is invalidated and set it
     if (invalidated) {
       await dbUtils.deleteShopInfo(shop);
+      bugsnagClient.notify("shop deletion alert");
     } else {
       console.log("random uninstall called");
       // shopify random uninstall call. simply ignore
+      // AND NOTIFY BUGSNAG
+      bugsnagClient.notify("falsy uninstall triggered");
     }
   } catch (error) {
     console.log(`[verifyAndDelete] error: ${error}`);
