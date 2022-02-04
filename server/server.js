@@ -4,7 +4,6 @@ import "isomorphic-fetch";
 import mongoose from "mongoose";
 import createShopifyAuth, { verifyRequest } from "@shopify/koa-shopify-auth";
 import Shopify, { ApiVersion } from "@shopify/shopify-api";
-import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
 import bodyParser from "koa-body-parser";
@@ -17,7 +16,7 @@ import { DBConnector } from "./dbUtils/dbConnector";
 import { dbUtils } from "./dbUtils/helpers";
 import { createServiceApp } from "@rudder/rudder-service";
 import serviceOptions from "./monitoring/serviceOptions";
-import { bugsnagClient } from "./monitoring/bugsnag";
+import { bugsnagClient, logger } from "@rudder/rudder-service";
 import { serviceRoutes } from '@rudder/rudder-service';
 
 dotenv.config();
@@ -33,11 +32,10 @@ DBConnector.setConfigFromEnv()
   .connect()
   .then(() => {
     dbConnected = true;
-    console.log("Connected to DB successfully");
+    logger.info("Connected to DB successfully");
   })
   .catch((err) => {
-    console.log(`DB connection Failed: ${err}`);
-    bugsnagClient.notify("DB connection Failed.");
+    logger.error(`DB connection Failed: ${err}`);
     process.exit(1);
   });
 
@@ -87,8 +85,8 @@ app.prepare().then(async () => {
         const { shop, accessToken, scope } = ctx.state.shopify;
         const host = ctx.query.host;
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
-        console.log(`The token is ${accessToken}`);
-        console.log("inside Shopify afterAuth");
+        logger.debug(`The token is ${accessToken}`);
+        logger.debug("inside Shopify afterAuth");
 
         try {
           const currentShopInfo = await dbUtils.getDataByShop(shop);
@@ -104,12 +102,12 @@ app.prepare().then(async () => {
                 accessToken,
               },
             };
-            console.log("inserting shop info");
+            logger.info("inserting shop info");
             await dbUtils.insertShopInfo(newShopInfo);
           }
         } catch (err) {
           // TODO: setup alerts
-          console.log(`error while querying DB: ${err}`);
+          logger.error(`error while querying DB: ${err}`);
         }
 
         const response = await Shopify.Webhooks.Registry.register({
@@ -119,15 +117,15 @@ app.prepare().then(async () => {
           topic: "APP_UNINSTALLED",
           webhookHandler: async (topic, shop, body) => {
             delete ACTIVE_SHOPIFY_SHOPS[shop];
-            console.log("this should be called on uninstall");
+            logger.debug("this should be called on uninstall");
             // await dbUtils.deleteShopInfo(shop);
           },
         });
 
-        console.log("RESPONSE ", JSON.stringify(response));
+        logger.debug(`RESPONSE ${JSON.stringify(response)}`);
 
         if (!response.success) {
-          console.log(
+          logger.error(
             `Failed to register APP_UNINSTALLED webhook: ${response.result}`
           );
         }
@@ -146,19 +144,20 @@ app.prepare().then(async () => {
 
   router.post("/webhooks", async (ctx) => {
     try {
-      console.log("inside /webhooks route");
-      console.log("CTX BODY", JSON.stringify(ctx.request.body));
-      console.log("CTX QUERY", JSON.stringify(ctx.request.query));
-      console.log("CTX", JSON.stringify(ctx));
+      logger.info("inside /webhooks route");
+      logger.info(`CTX BODY: ${JSON.stringify(ctx.request.body)}`);
+      logger.info(`CTX QUERY ${JSON.stringify(ctx.request.query)}`);
+      logger.info(`CTX ${JSON.stringify(ctx)}`);
       const { shop } = ctx.request.query;
       await dbUtils.deleteShopInfo(shop);
-      console.log(`Webhook processed, returned status code 200`);
+      logger.info(`Webhook processed, returned status code 200`);
       await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
       ctx.body = "OK";
       ctx.status = 200;
       return ctx;
     } catch (error) {
-      console.log(`Call to /webhooks failed: ${error}`);
+      logger.error(`Call to /webhooks failed: ${error}`);
+      bugsnagClient.notify(`Call to /webhooks failed: ${error}`);
       ctx.status = 500;
     }
   });
@@ -181,7 +180,8 @@ app.prepare().then(async () => {
       ctx.body = { success: true };
       ctx.status = 200;
     } catch (err) {
-      console.log("error in /register/webhooks ", err);
+      logger.error("error in /register/webhooks ", err);
+      bugsnagClient.notify(`failure in register: ${err}`);
       ctx.body = { success: false, error: err.message };
       ctx.status = 500;
     }
@@ -197,7 +197,8 @@ app.prepare().then(async () => {
       ctx.body = { success: true };
       ctx.status = 200;
     } catch (err) {
-      console.log("error in /update/webhooks ", err);
+      logger.error("error in /update/webhooks ", err);
+      bugsnagClient.notify(`failure in update: ${err}`);
       ctx.body = { success: false, error: err.message };
       ctx.status = 500;
     }
@@ -209,13 +210,14 @@ app.prepare().then(async () => {
     try {
       const shop = ctx.get("shop");
       const rudderWebhookUrl = await fetchRudderWebhookUrl(shop);
-      console.log("FROM FETCH ROUTE ", rudderWebhookUrl);
+      logger.info("FROM FETCH ROUTE ", rudderWebhookUrl);
       ctx.body = {
         rudderWebhookUrl: rudderWebhookUrl,
       };
       ctx.status = 200;
     } catch (error) {
-      console.log(`Failed to fetch dataplane: ${error}`);
+      logger.error(`Failed to fetch dataplane: ${error}`);
+      bugsnagClient.notify(`failure during fetch: ${error}`);
       ctx.status = 500;
     }
     return ctx;
@@ -237,6 +239,8 @@ app.prepare().then(async () => {
   // GDPR mandatory route. Deleting shop information here
   router.post("/shop/redact", async ctx => {
     verifyRequest({ returnHeader: true });
+    logger.info('shop redact called');
+    bugsnagClient.notify('shop redact called');
     const { shop_domain } = ctx.request.body;
     await dbUtils.deleteShopInfo(shop_domain);
     ctx.body = "OK";
@@ -266,7 +270,7 @@ app.prepare().then(async () => {
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("(.*)", async (ctx) => {
 
-    console.log("INSIDE THIS ROUTE");
+    logger.info("INSIDE THIS ROUTE");
 
     const shop = ctx.query.shop;
     if (!shop) {
@@ -275,14 +279,14 @@ app.prepare().then(async () => {
       return ctx;
     }
 
-    console.log("ACTIVE_SHOPIFY_SHOPS, shop", ACTIVE_SHOPIFY_SHOPS, shop);
+    logger.debug(`current shop: ${shop}`);
 
     // This shop hasn't been seen yet, go through OAuth to create a session
     if (ACTIVE_SHOPIFY_SHOPS[shop] === undefined || !ctx.query.host) {
-      console.log("redirecting to auth/shop");
+      logger.info("redirecting to auth/shop");
       ctx.redirect(`/auth?shop=${shop}`);
     } else {
-      console.log("going to handleRequest");
+      logger.info("going to handleRequest");
       await handleRequest(ctx);
     }
   });
@@ -290,6 +294,6 @@ app.prepare().then(async () => {
   server.use(router.allowedMethods());
   server.use(router.routes());
   server.listen(port, () => {
-    console.log(`> Ready on http://localhost:${port}`);
+    logger.info(`> Ready on http://localhost:${port}`);
   });
 });
