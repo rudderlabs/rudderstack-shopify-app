@@ -8,6 +8,7 @@ import {
   updateScriptTag
 } from "../webhooks/helper";
 import { dbUtils } from "../dbUtils/helpers";
+import { bugsnagClient, logger } from "@rudder/rudder-service";
 
 const embedTopicInUrl = (url, topic) => {
   const enrichedUrl = new URL(url);
@@ -53,23 +54,24 @@ export const unregisterRudderWebhooks = async (shop) => {
 export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
   const currentConfig = await dbUtils.getConfigByShop(shop);
   const { accessToken, webhooks: registeredWebhooks } = currentConfig;
-  console.log("REGISTERED WEBHOOKS", registeredWebhooks);
+  logger.info(`REGISTERED WEBHOOKS: ${registeredWebhooks}`);
   
   // const updatedWebhooks = [];
   let failedStatus = false;
   await Promise.all(registeredWebhooks.map(async ({ webhookId, topic }) => {
     try {
       const webhookUrl = embedTopicInUrl(rudderWebhookUrl, topic);
-      const updatedId = await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
+      await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
       // updatedWebhooks.push({ webhookId: updatedId, topic });
-      console.log(`Updated webhook - ${webhookId} ${topic}`);
+      logger.info(`Updated webhook - ${webhookId} ${topic}`);
     } catch (err) {
-      console.log(`error while updating webhooks: ${err}`, err);
+      logger.error(`error while updating webhooks: ${err}`);
       failedStatus = true;
     }
   }));
 
   if (failedStatus) {
+    bugsnagClient.notify(`webhook update failed for: ${shop}`);
     throw new Error("update webhooks failed");
   }
 
@@ -82,7 +84,7 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
     }
   };
   await dbUtils.updateShopInfo(shop, updatedInfo);
-  console.log("Webhooks saved to DB");
+  logger.info("Webhooks saved to DB");
 };
 
 /**
@@ -104,17 +106,18 @@ export const registerRudderWebhooks = async (rudderWebhookUrl, shop) => {
       );
       webhooks.push({webhookId, topic: topicKey});
     } catch (err) {
-      console.log(`error while registering webhooks: ${err}`);
+      logger.error(`error while registering webhooks: ${err}`);
       failedStatus = true;
     }
   }));
 
   if (failedStatus) {
-    console.log("register webhook failed");
+    logger.error("register webhook failed");
+    bugsnagClient.notify(`register webhook failed for : ${shop}`);
     throw new Error("register webhook failed");
   }
   
-  console.log("Registered webhook id", webhooks);
+  logger.info(`Registered webhook id: ${webhooks}`);
   
   // save webhook ids in DB
   const updatedInfo = {
@@ -126,7 +129,7 @@ export const registerRudderWebhooks = async (rudderWebhookUrl, shop) => {
     }
   };
   await dbUtils.updateShopInfo(shop, updatedInfo);
-  console.log("Webhooks saved to DB");
+  logger.info("Webhooks saved to DB");
 };
 
 /**
@@ -149,7 +152,7 @@ export const registerWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
       );
       webhooks.push({webhookId, topic: topicKey});
     } catch (err) {
-      console.log(`error while registering webhooks: ${err}`);
+      logger.error(`error while registering webhooks: ${err}`);
       webhookRegisterFailed = true;
     }
   }));
@@ -159,7 +162,7 @@ export const registerWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
   try {
     resp = await registerScriptTag(currentConfig.accessToken, rudderWebhookUrl, shop);
   } catch (err) {
-    console.log(`script tag register failure: ${err}`);
+    logger.error(`script tag register failure: ${err}`);
     scriptTagFailed = true;
   }
   
@@ -180,27 +183,28 @@ export const registerWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
   }
 
   if (webhookRegisterFailed) {
-    console.log("register webhook failed");
+    logger.error("register webhook failed");
     throw new Error("register webhook failed");
   }
 
   if (scriptTagFailed) {
-    console.log("script tag register failed");
+    logger.error("script tag register failed");
+    bugsnagClient.notify(`script tag api register failed for: ${shop}`);
     throw new Error("script tag register failed");
   }
   
-  console.log("Registered webhook id", webhooks);
-  console.log("Registered script tag", resp.script_tag);
+  logger.info(`Registered webhook id: ${webhooks}`);
+  logger.info(`Registered script tag: ${resp.script_tag}`);
   
   // save to DB only if both succeeds
   await dbUtils.updateShopInfo(shop, updatedInfo);
-  console.log("Webhooks saved to DB");
+  logger.info("Webhooks saved to DB");
 };
 
 export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
   const currentConfig = await dbUtils.getConfigByShop(shop);
   const { accessToken, webhooks: registeredWebhooks } = currentConfig;
-  console.log("REGISTERED WEBHOOKS", registeredWebhooks);
+  logger.info(`REGISTERED WEBHOOKS: ${registeredWebhooks}`);
   
   // const updatedWebhooks = [];
   let updateWebhookFailed = false;
@@ -209,9 +213,9 @@ export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
       const webhookUrl = embedTopicInUrl(rudderWebhookUrl, topic);
       await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
       // updatedWebhooks.push({ webhookId: updatedId, topic });
-      console.log(`Updated webhook - ${webhookId} ${topic}`);
+      logger.info(`Updated webhook - ${webhookId} ${topic}`);
     } catch (err) {
-      console.log(`error while updating webhooks: ${err}`)
+      logger.error(`error while updating webhooks: ${err}`)
       updateWebhookFailed = true;
     }
   }));
@@ -221,10 +225,11 @@ export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
     await updateScriptTag(accessToken, rudderWebhookUrl, shop, currentConfig.scriptTagId);
   } catch (err) {
     updateScriptFailed = true
-    console.log("script tag update failed ", err);
+    logger.error(`script tag update failed: ${err}`);
   }
 
   if (updateWebhookFailed) {
+    bugsnagClient.notify('update webhook call failed');
     throw new Error("update webhooks failed");
   }
 
@@ -237,9 +242,10 @@ export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
     }
   };
   await dbUtils.updateShopInfo(shop, updatedInfo);
-  console.log("DB Updated for update call");
+  logger.info("DB Updated for update call");
 
   if (updateScriptFailed) {
+    bugsnagClient.notify('update script tag call failed');
     throw new Error("script tag update failed");
   }
 };
@@ -251,7 +257,7 @@ export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
  */
 export const fetchRudderWebhookUrl = async (shop) => {
   const config = await dbUtils.getConfigByShop(shop);
-  console.log("FROM UTIL FUNCTION ", JSON.stringify(config));
+  logger.info(`FROM UTIL FUNCTION: ${JSON.stringify(config)}`);
   if (!config || !config.rudderWebhookUrl) {
     return null;
   }

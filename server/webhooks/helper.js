@@ -34,7 +34,7 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
     address: `${webhookUrl}`,
     format: "json",
   };
-  console.log("[registerWebhooks] topic, webhookUrl ", topic, webhookUrl);
+  logger.info(`[registerWebhooks] topic, webhookUrl ${topic} ${webhookUrl}`);
   const response = await client.post({
     path: "webhooks",
     data: {
@@ -42,8 +42,8 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
     },
     type: DataType.JSON,
   });
-  console.log("[registerWebhooks] topic, webhookUrl DONE ", topic, webhookUrl);
-  console.log("RESPONSE", JSON.stringify(response.body));
+  logger.info(`[registerWebhooks] topic, webhookUrl ${topic} ${webhookUrl}`);
+  logger.info(`RESPONSE: ${JSON.stringify(response.body)}`);
   return response.body.webhook.id;
 };
 
@@ -67,7 +67,6 @@ export const registerScriptTag = async (accessToken, rudderWebhookUrl, shop) => 
     type: DataType.JSON,
   });
 
-  console.log("Script tag endpoint called", response.body);
   return response.body;
 };
 
@@ -93,7 +92,6 @@ export const updateScriptTag = async (accessToken, rudderWebhookUrl, shop, scrip
     type: DataType.JSON,
   });
 
-  console.log("Script tag endpoint called", response.body);
   return response.body;
 };
 
@@ -107,7 +105,7 @@ export const updateScriptTag = async (accessToken, rudderWebhookUrl, shop, scrip
 export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) => {
   const client = new Shopify.Clients.Rest(shop, accessToken);
 
-  console.log("inside update function");
+  logger.info("inside update function");
   const webhookToUpdate = {
     id: webhookId,
     address: webhookUrl,
@@ -120,7 +118,7 @@ export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) =
     type: DataType.JSON,
   });
 
-  console.log("RESPONSE", response);
+  logger.info(`RESPONSE: ${response}`);
   return response.body.webhook.id;
 };
 
@@ -133,7 +131,7 @@ export const verifyAndDelete = async (shop) => {
   try {
     const config = await dbUtils.getConfigByShop(shop);
     if (!config || !config.accessToken) {
-      console.log(`[verifyAndDelete] config not found for shop: ${shop}`);
+      logger.info(`[verifyAndDelete] config not found for shop: ${shop}`);
       return;
     }
     const { accessToken } = config;
@@ -143,21 +141,21 @@ export const verifyAndDelete = async (shop) => {
     try {
       await client.get({ path: "webhooks/count" });
     } catch (err) {
-      console.log("[verifyAndDelete] error ", err);
+      logger.error(`[verifyAndDelete] error: ${err}`);
       invalidated = true;
     }
 
-    // check if token is invalidated and set it
+    // check if token is invalidated
     if (invalidated) {
       await dbUtils.deleteShopInfo(shop);
       bugsnagClient.notify("shop deletion alert");
     } else {
-      console.log("random uninstall called");
       // shopify random uninstall call. simply ignore
       // AND NOTIFY BUGSNAG
+      logger.info("random uninstall called");
       bugsnagClient.notify("falsy uninstall triggered");
     }
   } catch (error) {
-    console.log(`[verifyAndDelete] error: ${error}`);
+    logger.error(`[verifyAndDelete] error: ${error}`);
   }
 }
