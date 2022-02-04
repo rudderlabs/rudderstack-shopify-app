@@ -22,6 +22,7 @@ RUN ssh-keyscan github.com >> ~/.ssh/known_hosts
 # Bundle app source
 COPY . .
 RUN rm -rf /usr/src/app/node_modules
+RUN rm -rf node_modules package-lock.json
 
 RUN npm install
 # If you are building your code for production

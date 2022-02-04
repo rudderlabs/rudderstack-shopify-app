@@ -1,5 +1,5 @@
 // import fs from 'fs';
-import Bugsnag from '@bugsnag/js';
+// import Bugsnag from '@bugsnag/js';
 
 // let version = 'notset';
 // try {
@@ -15,9 +15,9 @@ const bugsnag = {
     redactedKeys: ['authorization', 'password', 'token'],
 };
 
-export const bugsnagClient = Bugsnag.createClient({
-    apiKey: process.env.API_BUGSNAG_KEY,
-    appVersion: version,
-});
+// export const bugsnagClient = Bugsnag.createClient({
+//     apiKey: process.env.API_BUGSNAG_KEY,
+//     appVersion: version,
+// });
 
 export default bugsnag;
