@@ -225,7 +225,9 @@ app.prepare().then(async () => {
     return ctx;
   });
 
-  router.get("/health", (ctx) => {
+  // health endpoint is exposed by rudder-service
+  // this route is for kubernetes readiness and liveness probes
+  router.get("/ready", (ctx) => {
     let response = "Not ready";
     let status = 400;
     if (dbConnected && mongoose.connection.readyState === 1) {
