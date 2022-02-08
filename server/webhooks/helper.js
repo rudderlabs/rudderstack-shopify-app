@@ -54,10 +54,12 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
  * @param {*} shop 
  */
 export const registerScriptTag = async (accessToken, rudderWebhookUrl, shop) => {
+  logger.info("WEBHOOK URL ", webhookUrl);
   const wrappedUrl = new URL(rudderWebhookUrl);
   const writeKey = wrappedUrl.searchParams.get('writeKey');
   const dataPlane = wrappedUrl.hostname;
-  const cdnBaseUrl = process.env.SHOPIFY_TRACKER_URL || 'shopify-tracker.dev-rudder.rudderlabs.com';
+  logger.info("DATAPLANE URL ", dataPlane);
+  const cdnBaseUrl = process.env.SHOPIFY_TRACKER_URL || 'd945-115-96-157-240.ngrok.io';
   const scriptTagUrl = `https:\/\/${cdnBaseUrl}\/load?writeKey=${writeKey}&dataPlaneUrl=${dataPlane}`;
 
   const client = new Shopify.Clients.Rest(shop, accessToken);
@@ -118,7 +120,7 @@ export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) =
     type: DataType.JSON,
   });
 
-  logger.info(`RESPONSE: ${response}`);
+  logger.info(`RESPONSE: ${JSON.stringify(response)}`);
   return response.body.webhook.id;
 };
 

@@ -152,7 +152,8 @@ app.prepare().then(async () => {
       logger.info(`CTX: ${JSON.stringify(ctx)}`);
       
       const { shop } = ctx.request.query;
-      verifyAndDelete(shop);
+      await verifyAndDelete(shop);
+      delete ACTIVE_SHOPIFY_SHOPS[shop];
       logger.info(`Webhook processed, returned status code 200`);
       await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
       ctx.body = "OK";

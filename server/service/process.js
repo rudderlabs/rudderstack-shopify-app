@@ -204,7 +204,7 @@ export const registerWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
 export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
   const currentConfig = await dbUtils.getConfigByShop(shop);
   const { accessToken, webhooks: registeredWebhooks } = currentConfig;
-  logger.info(`REGISTERED WEBHOOKS: ${registeredWebhooks}`);
+  logger.info(`REGISTERED WEBHOOKS: ${JSON.stringify(registeredWebhooks)}`);
   
   // const updatedWebhooks = [];
   let updateWebhookFailed = false;
