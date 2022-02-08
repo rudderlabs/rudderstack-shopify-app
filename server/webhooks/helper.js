@@ -59,7 +59,7 @@ export const registerScriptTag = async (accessToken, rudderWebhookUrl, shop) => 
   const writeKey = wrappedUrl.searchParams.get('writeKey');
   const dataPlane = wrappedUrl.hostname;
   logger.info("DATAPLANE URL ", dataPlane);
-  const cdnBaseUrl = process.env.SHOPIFY_TRACKER_URL || 'd945-115-96-157-240.ngrok.io';
+  const cdnBaseUrl = process.env.SHOPIFY_TRACKER_URL || 'cdn.rudderlabs.com/v1/rudder-analytics.min.js';
   const scriptTagUrl = `https:\/\/${cdnBaseUrl}\/load?writeKey=${writeKey}&dataPlaneUrl=${dataPlane}`;
 
   const client = new Shopify.Clients.Rest(shop, accessToken);
