@@ -54,7 +54,7 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
  * @param {*} shop 
  */
 export const registerScriptTag = async (accessToken, rudderWebhookUrl, shop) => {
-  logger.info("WEBHOOK URL ", webhookUrl);
+  logger.info("WEBHOOK URL ", rudderWebhookUrl);
   const wrappedUrl = new URL(rudderWebhookUrl);
   const writeKey = wrappedUrl.searchParams.get('writeKey');
   const dataPlane = wrappedUrl.hostname;
