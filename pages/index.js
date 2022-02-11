@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
+  Heading,
   Page,
   Form,
   FormLayout,
@@ -128,29 +129,30 @@ function Index() {
 
   return (
     <Page>
+      <Heading>Configure RudderStack</Heading>
       <Form onSubmit={handleSubmit}>
         <FormLayout>
           <TextField
             value={currentDataplaneURL}
             onChange={(value) => setCurrentDataPlaneUrl(value)}
-            label="Rudderstack Data Plane URL"
+            label="Data Plane URL"
             type="text"
-            placeholder="Data Plane URL"
+            placeholder="https://mydataplane.rudderlabs.com"
             helpText={
               <span>
-                The Dataplane URL to which Shopify Events will be forwarded
+                The RudderStack data plane URL to which Shopify events will be forwarded
               </span>
             }
           />
           <TextField
             value={currentWriteKey}
             onChange={(value) => setCurrentWriteKey(value)}
-            label="Source WriteKey"
+            label="Write Key"
             type="text"
-            placeholder="writekey"
+            placeholder="1weq35iqxRkpUXHgDgYo3g33mg"
             helpText={
               <span>
-                WriteKey for the Source created on RudderStack Dashboard
+                The write key of the Shopify source created on the RudderStack Dashboard
               </span>
             }
           />
