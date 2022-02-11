@@ -135,24 +135,24 @@ function Index() {
           <TextField
             value={currentDataplaneURL}
             onChange={(value) => setCurrentDataPlaneUrl(value)}
-            label="RudderStack Data Plane URL"
+            label="Data Plane URL"
             type="text"
-            placeholder="Data Plane URL"
+            placeholder="https://mydataplane.rudderlabs.com"
             helpText={
               <span>
-                The Data Plane URL to which Shopify events will be forwarded
+                The RudderStack data plane URL to which Shopify events will be forwarded
               </span>
             }
           />
           <TextField
             value={currentWriteKey}
             onChange={(value) => setCurrentWriteKey(value)}
-            label="Write Key of the Shopify source"
+            label="Write Key"
             type="text"
-            placeholder="writekey"
+            placeholder="1weq35iqxRkpUXHgDgYo3g33mg"
             helpText={
               <span>
-                WriteKey for the Source created on RudderStack Dashboard
+                The write key of the Shopify source created on the RudderStack Dashboard
               </span>
             }
           />
