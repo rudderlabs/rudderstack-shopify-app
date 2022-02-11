@@ -2,12 +2,12 @@
 // add a node-cache layer in front of the DB
 import mongoose from "mongoose";
 import StoreConfig from "./models/storeConfig";
-import { logger, bugsnagClient } from "@rudder/rudder-service";
+// import { logger, //bugsnagClient } from "@rudder/rudder-service";
 
 const getDataByShop = async (shop) => {
-  logger.info("Inside shop getData function");
+  console.log("Inside shop getData function");
   const storeInfo = await StoreConfig.findOne({ shopname: shop });
-  logger.info(`Store Info: ${storeInfo}`);
+  console.log(`Store Info: ${storeInfo}`);
   return storeInfo;
 };
 
@@ -25,29 +25,29 @@ const getConfigByShop = async (shop) => {
 };
 
 const insertShopInfo = async (shopData) => {
-  logger.info("Inside shop insert function");
+  console.log("Inside shop insert function");
   await StoreConfig.create({
     ...shopData,
     _id: mongoose.Types.ObjectId()
   });
-  logger.info("Shop info inserted");
+  console.log("Shop info inserted");
 };
 
 const updateShopInfo = async (shop, updateData) => {
-  logger.info("Inside shop update function");
+  console.log("Inside shop update function");
   await StoreConfig.findOneAndUpdate(
     { shopname: shop},
     updateData
   );
-  logger.info('Shop info updated');
+  console.log('Shop info updated');
 }
 
 const deleteShopInfo = async (shop) => {
-  logger.info("Inside shop delete function");
+  console.log("Inside shop delete function");
   await StoreConfig.findOneAndDelete(
     { shopname: shop }
   );
-  logger.info(`Config deleted for shop ${shop}`);
+  console.log(`Config deleted for shop ${shop}`);
 };
 
 export const dbUtils = {

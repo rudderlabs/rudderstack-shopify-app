@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { logger } from "@rudder/rudder-service";
+// import { logger } from "@rudder/rudder-service";
 
 export class DBConnector {
   constructor() {
@@ -19,7 +19,7 @@ export class DBConnector {
   }
 
   async connect() {
-    logger.info("inside dbconnector connect");
+    console.log("inside dbconnector connect");
     if (!this.config) {
       throw new Error('[DbConnector]:: Could not connect to DB. config not set.');
     }
@@ -28,7 +28,7 @@ export class DBConnector {
     let options = {};
 
     if (!process.env.MODE || process.env.MODE !== 'local') {
-      logger.info("Trying connection to remote DB");
+      console.log("Trying connection to remote DB");
       options = {
         ssl: true,
         sslValidate: true,
@@ -38,7 +38,7 @@ export class DBConnector {
       
     }
     
-    logger.info("calling connect");
+    console.log("calling connect");
     await mongoose.connect(
       connectionUrl, 
       options

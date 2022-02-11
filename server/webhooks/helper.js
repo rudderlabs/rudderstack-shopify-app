@@ -1,5 +1,5 @@
 import Shopify, { DataType } from "@shopify/shopify-api";
-import { bugsnagClient, logger } from "@rudder/rudder-service";
+// import { //bugsnagClient, logger } from "@rudder/rudder-service";
 import { topicMapping } from "../constants/topic-mapping";
 import { dbUtils } from "../dbUtils/helpers";
 
@@ -34,7 +34,7 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
     address: `${webhookUrl}`,
     format: "json",
   };
-  logger.info(`[registerWebhooks] topic, webhookUrl ${topic} ${webhookUrl}`);
+  console.log(`[registerWebhooks] topic, webhookUrl ${topic} ${webhookUrl}`);
   const response = await client.post({
     path: "webhooks",
     data: {
@@ -42,8 +42,8 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
     },
     type: DataType.JSON,
   });
-  logger.info(`[registerWebhooks] topic, webhookUrl ${topic} ${webhookUrl}`);
-  logger.info(`RESPONSE: ${JSON.stringify(response.body)}`);
+  console.log(`[registerWebhooks] topic, webhookUrl ${topic} ${webhookUrl}`);
+  console.log(`RESPONSE: ${JSON.stringify(response.body)}`);
   return response.body.webhook.id;
 };
 
@@ -54,11 +54,11 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
  * @param {*} shop 
  */
 export const registerScriptTag = async (accessToken, rudderWebhookUrl, shop) => {
-  logger.info("WEBHOOK URL ", rudderWebhookUrl);
+  console.log("WEBHOOK URL ", rudderWebhookUrl);
   const wrappedUrl = new URL(rudderWebhookUrl);
   const writeKey = wrappedUrl.searchParams.get('writeKey');
   const dataPlane = wrappedUrl.hostname;
-  logger.info("DATAPLANE URL ", dataPlane);
+  console.log("DATAPLANE URL ", dataPlane);
   const trackingServerBaseUrl = process.env.SHOPIFY_TRACKER_URL || 'shopify-tracker.dev-rudder.rudderlabs.com';
   const scriptTagUrl = `https:\/\/${trackingServerBaseUrl}\/load?writeKey=${writeKey}&dataPlaneUrl=${dataPlane}`;
 
@@ -107,7 +107,7 @@ export const updateScriptTag = async (accessToken, rudderWebhookUrl, shop, scrip
 export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) => {
   const client = new Shopify.Clients.Rest(shop, accessToken);
 
-  logger.info("inside update function");
+  console.log("inside update function");
   const webhookToUpdate = {
     id: webhookId,
     address: webhookUrl,
@@ -120,7 +120,7 @@ export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) =
     type: DataType.JSON,
   });
 
-  logger.info(`RESPONSE: ${JSON.stringify(response)}`);
+  console.log(`RESPONSE: ${JSON.stringify(response)}`);
   return response.body.webhook.id;
 };
 
@@ -133,7 +133,7 @@ export const verifyAndDelete = async (shop) => {
   try {
     const config = await dbUtils.getConfigByShop(shop);
     if (!config || !config.accessToken) {
-      logger.info(`[verifyAndDelete] config not found for shop: ${shop}`);
+      console.log(`[verifyAndDelete] config not found for shop: ${shop}`);
       return;
     }
     const { accessToken } = config;
@@ -143,21 +143,21 @@ export const verifyAndDelete = async (shop) => {
     try {
       await client.get({ path: "webhooks/count" });
     } catch (err) {
-      logger.error(`[verifyAndDelete] error: ${err}`);
+      console.log(`[verifyAndDelete] error: ${err}`);
       invalidated = true;
     }
 
     // check if token is invalidated
     if (invalidated) {
       await dbUtils.deleteShopInfo(shop);
-      bugsnagClient.notify("shop deletion alert");
+      //bugsnagClient.notify("shop deletion alert");
     } else {
       // shopify random uninstall call. simply ignore
       // AND NOTIFY BUGSNAG
-      logger.info("random uninstall called");
-      bugsnagClient.notify("falsy uninstall triggered");
+      console.log("random uninstall called");
+      //bugsnagClient.notify("falsy uninstall triggered");
     }
   } catch (error) {
-    logger.error(`[verifyAndDelete] error: ${error}`);
+    console.log(`[verifyAndDelete] error: ${error}`);
   }
 }

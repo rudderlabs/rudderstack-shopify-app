@@ -16,10 +16,10 @@ import {
 import { DBConnector } from "./dbUtils/dbConnector";
 import { dbUtils } from "./dbUtils/helpers";
 import { verifyAndDelete } from "./webhooks/helper";
-import { createServiceApp } from "@rudder/rudder-service";
-import serviceOptions from "./monitoring/serviceOptions";
-import { bugsnagClient, logger } from "@rudder/rudder-service";
-import { serviceRoutes } from '@rudder/rudder-service';
+// import { createServiceApp } from "@rudder/rudder-service";
+// import serviceOptions from "./monitoring/serviceOptions";
+// import { //bugsnagClient, logger } from "@rudder/rudder-service";
+// import { serviceRoutes } from '@rudder/rudder-service';
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -34,10 +34,10 @@ DBConnector.setConfigFromEnv()
   .connect()
   .then(() => {
     dbConnected = true;
-    logger.info("Connected to DB successfully");
+    console.log("Connected to DB successfully");
   })
   .catch((err) => {
-    logger.error(`DB connection Failed: ${err}`);
+    console.log(`DB connection Failed: ${err}`);
     process.exit(1);
   });
 
@@ -85,10 +85,10 @@ app.prepare().then(async () => {
         const { shop, accessToken, scope } = ctx.state.shopify;
         const host = ctx.query.host;
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
-        logger.debug(`The token is ${accessToken}`);
-        logger.debug("inside Shopify afterAuth");
+        console.log(`The token is ${accessToken}`);
+        console.log("inside Shopify afterAuth");
 
-        bugsnagClient.notify("TEST ALERT");
+        //bugsnagClient.notify("TEST ALERT");
 
         try {
           const currentShopInfo = await dbUtils.getDataByShop(shop);
@@ -104,12 +104,12 @@ app.prepare().then(async () => {
                 accessToken,
               },
             };
-            logger.info("inserting shop info");
+            console.log("inserting shop info");
             await dbUtils.insertShopInfo(newShopInfo);
           }
         } catch (err) {
           // TODO: setup alerts
-          logger.error(`error while querying DB: ${err}`);
+          console.log(`error while querying DB: ${err}`);
         }
 
         const response = await Shopify.Webhooks.Registry.register({
@@ -119,15 +119,15 @@ app.prepare().then(async () => {
           topic: "APP_UNINSTALLED",
           webhookHandler: async (topic, shop, body) => {
             delete ACTIVE_SHOPIFY_SHOPS[shop];
-            logger.info("this should be called on uninstall");
+            console.log("this should be called on uninstall");
             // verifyAndDelete(shop);
           },
         });
 
-        logger.debug(`RESPONSE: ${JSON.stringify(response)}`);
+        console.log(`RESPONSE: ${JSON.stringify(response)}`);
 
         if (!response.success) {
-          logger.error(
+          console.log(
             `Failed to register APP_UNINSTALLED webhook: ${response.result}`
           );
         }
@@ -146,21 +146,21 @@ app.prepare().then(async () => {
 
   router.post("/webhooks", async (ctx) => {
     try {
-      logger.info("inside /webhooks route");
-      logger.info(`CTX BODY :${JSON.stringify(ctx.request.body)}`);
-      logger.info(`CTX QUERY: ${JSON.stringify(ctx.request.query)}`);
-      logger.info(`CTX: ${JSON.stringify(ctx)}`);
+      console.log("inside /webhooks route");
+      console.log(`CTX BODY :${JSON.stringify(ctx.request.body)}`);
+      console.log(`CTX QUERY: ${JSON.stringify(ctx.request.query)}`);
+      console.log(`CTX: ${JSON.stringify(ctx)}`);
       
       const { shop } = ctx.request.query;
       await verifyAndDelete(shop);
       delete ACTIVE_SHOPIFY_SHOPS[shop];
-      logger.info(`Webhook processed, returned status code 200`);
+      console.log(`Webhook processed, returned status code 200`);
       await Shopify.Webhooks.Registry.process(ctx.req, ctx.res);
       ctx.body = "OK";
       ctx.status = 200;
       return ctx;
     } catch (error) {
-      logger.error(`Call to /webhooks failed: ${error}`);
+      console.log(`Call to /webhooks failed: ${error}`);
       ctx.status = 500;
     }
   });
@@ -183,7 +183,7 @@ app.prepare().then(async () => {
       ctx.body = { success: true };
       ctx.status = 200;
     } catch (err) {
-      logger.error(`error in /register/webhooks ${err}`);
+      console.log(`error in /register/webhooks ${err}`);
       ctx.body = { success: false, error: err.message };
       ctx.status = 500;
     }
@@ -199,7 +199,7 @@ app.prepare().then(async () => {
       ctx.body = { success: true };
       ctx.status = 200;
     } catch (err) {
-      logger.error(`error in /update/webhooks ${err}`);
+      console.log(`error in /update/webhooks ${err}`);
       ctx.body = { success: false, error: err.message };
       ctx.status = 500;
     }
@@ -214,13 +214,13 @@ app.prepare().then(async () => {
     try {
       const shop = ctx.get("shop");
       const rudderWebhookUrl = await fetchRudderWebhookUrl(shop);
-      logger.debug(`FROM FETCH ROUTE :${rudderWebhookUrl}`);
+      console.log(`FROM FETCH ROUTE :${rudderWebhookUrl}`);
       ctx.body = {
         rudderWebhookUrl: rudderWebhookUrl,
       };
       ctx.status = 200;
     } catch (error) {
-      logger.error(`Failed to fetch dataplane: ${error}`);
+      console.log(`Failed to fetch dataplane: ${error}`);
       ctx.status = 500;
     }
     return ctx;
@@ -272,7 +272,7 @@ app.prepare().then(async () => {
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("(.*)", async (ctx) => {
     
-    logger.debug("INSIDE THIS ROUTE");
+    console.log("INSIDE THIS ROUTE");
     
     const shop = ctx.query.shop;
     if (!shop) {
@@ -283,10 +283,10 @@ app.prepare().then(async () => {
 
     // This shop hasn't been seen yet, go through OAuth to create a session
     if (ACTIVE_SHOPIFY_SHOPS[shop] === undefined || !ctx.query.host) {
-      logger.debug("redirecting to auth/shop");
+      console.log("redirecting to auth/shop");
       ctx.redirect(`/auth?shop=${shop}`);
     } else {
-      logger.debug("going to handleRequest");
+      console.log("going to handleRequest");
       await handleRequest(ctx);
     }
   });
@@ -294,6 +294,6 @@ app.prepare().then(async () => {
   server.use(router.allowedMethods());
   server.use(router.routes());
   server.listen(port, () => {
-    logger.info(`> Ready on http://localhost:${port}`);
+    console.log(`> Ready on http://localhost:${port}`);
   });
 });
