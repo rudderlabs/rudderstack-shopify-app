@@ -1,3 +1,6 @@
+# VSCode Configuration
+.vscode/
+
 # Environment Configuration
 .env
 

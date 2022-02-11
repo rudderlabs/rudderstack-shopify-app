@@ -2,7 +2,7 @@ export const topicMapping = {
  
     carts_create: "carts/create",
     carts_update: "carts/update",
-  
+
 
     checkouts_create: "checkouts/create",
     checkouts_delete: "checkouts/delete",
@@ -21,12 +21,12 @@ export const topicMapping = {
     customers_update: "customers/update",
   
   
-    fulfillment_events_create: "fulfillment_events/create",
-    fulfillment_events_delete: "fulfillment_events/delete",
+    // fulfillment_events_create: "fulfillment_events/create",
+    // fulfillment_events_delete: "fulfillment_events/delete",
   
   
     fulfillments_create: "fulfillments/create",
-    fulfillments_delete: "fulfillments/update",
+    fulfillments_update: "fulfillments/update",
   
 
 

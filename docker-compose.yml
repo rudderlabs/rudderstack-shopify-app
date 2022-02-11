@@ -1,0 +1,48 @@
+version: '3.1'
+
+services:
+
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: shopify_new_db
+      DB_NAME: shopify_new_db
+      DB_USER: rudder
+      DB_PASSWORD: password
+    volumes:
+      - ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8082:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password@mongo:27017/
+  
+  shopify-app:
+    build: .
+    ports:
+      - 8081:8081
+    depends_on:
+      - mongo
+    environment:
+      SHOPIFY_API_KEY: 38d5b7a8b6c0a4d3ad4f2c421c77db80
+      SHOPIFY_API_SECRET: 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
+      # SHOP: rudderstack-store.myshopify.com
+      HOST: <your ngrok tunelling url>
+      DB_HOST: mongo
+      DB_PORT: 27017
+      DB_NAME: shopify_new_db
+      DB_USER: rudder
+      DB_PASSWORD: password
+      MODE: local
+      DB_SSL_CA_PATH: /path/to/pem
+    
