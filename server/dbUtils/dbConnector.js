@@ -24,7 +24,8 @@ export class DBConnector {
       throw new Error('[DbConnector]:: Could not connect to DB. config not set.');
     }
     
-    let connectionUrl = `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?retryWrites=true&w=majority`;
+    // let connectionUrl = `mongodb://${this.config.USERNAME}:${this.config.PASSWORD}@${this.config.HOST}:${this.config.PORT}/${this.config.DB_NAME}?retryWrites=true&w=majority`;
+    let connectionUrl = `mongodb+srv://mongoprod:rudderpassword@cluster0.rbjvc.mongodb.net/shopify_app_db?retryWrites=true&w=majority`;
     let options = {};
 
     if (!process.env.MODE || process.env.MODE !== 'local') {

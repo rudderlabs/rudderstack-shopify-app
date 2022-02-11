@@ -7,7 +7,7 @@ import Shopify, { ApiVersion } from "@shopify/shopify-api";
 import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
-import bodyParser from "koa-body-parser";
+// import bodyParser from "koa-body-parser";
 import {
   fetchRudderWebhookUrl,
   registerWebhooksAndScriptTag,
@@ -15,7 +15,7 @@ import {
 } from "./service/process";
 import { DBConnector } from "./dbUtils/dbConnector";
 import { dbUtils } from "./dbUtils/helpers";
-import { verifyAndDelete } from "./webhooks/helper";
+import { verifyAndDelete, validateHmac } from "./webhooks/helper";
 // import { createServiceApp } from "@rudder/rudder-service";
 // import serviceOptions from "./monitoring/serviceOptions";
 // import { //bugsnagClient, logger } from "@rudder/rudder-service";
@@ -71,17 +71,21 @@ Shopify.Context.initialize({
 const ACTIVE_SHOPIFY_SHOPS = {};
 
 app.prepare().then(async () => {
-  // const server = new Koa();
-  const server = createServiceApp(serviceOptions);
+  const server = new Koa();
+  // const server = createServiceApp(serviceOptions);
   const router = new Router();
   server.keys = [Shopify.Context.API_SECRET_KEY];
-  server.use(bodyParser());
-  server.use(serviceRoutes());
+  // server.use(bodyParser());
+  // server.use(serviceRoutes());
+  // server.use(session(app));
+
   server.use(
     createShopifyAuth({
       accessMode: "offline",
       async afterAuth(ctx) {
         // Access token and shop available in ctx.state.shopify
+        // const { shop, accessToken, scope } = ctx.state.shopify;
+        console.log("SESSION ", ctx.session);
         const { shop, accessToken, scope } = ctx.state.shopify;
         const host = ctx.query.host;
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
@@ -144,13 +148,22 @@ app.prepare().then(async () => {
     ctx.res.statusCode = 200;
   };
 
-  router.post("/webhooks", async (ctx) => {
+  router.post(
+    "/webhooks",
+    async (ctx) => {
     try {
+      const { success, body } = await validateHmac(ctx);
+      console.log("validation stauts", success);
+      if (!success) {
+        ctx.body = "Unauthorized";
+        ctx.status = 401;
+        return ctx;
+      }
+
       console.log("inside /webhooks route");
-      console.log(`CTX BODY :${JSON.stringify(ctx.request.body)}`);
       console.log(`CTX QUERY: ${JSON.stringify(ctx.request.query)}`);
       console.log(`CTX: ${JSON.stringify(ctx)}`);
-      
+
       const { shop } = ctx.request.query;
       await verifyAndDelete(shop);
       delete ACTIVE_SHOPIFY_SHOPS[shop];
@@ -212,6 +225,7 @@ app.prepare().then(async () => {
        returnHeader: true
     }), async (ctx) => {
     try {
+      console.log("fetch/rudder-webhook ctx header", ctx.header);
       const shop = ctx.get("shop");
       const rudderWebhookUrl = await fetchRudderWebhookUrl(shop);
       console.log(`FROM FETCH ROUTE :${rudderWebhookUrl}`);
@@ -241,19 +255,33 @@ app.prepare().then(async () => {
   });
 
   // GDPR mandatory route. Deleting shop information here
-  router.post("/shop/redact", verifyRequest({
-     returnHeader: true, accessMode: 'offline', }), async ctx => {
-    const { shop_domain } = ctx.request.body;
-    await dbUtils.deleteShopInfo(shop_domain);
-    ctx.body = "OK";
-    ctx.status = 200;
-    return ctx;
+  router.post(
+    "/shop/redact", 
+    async ctx => {
+      const { success, body } = await validateHmac(ctx);
+      if (!success) {
+        ctx.body = "Unauthorized";
+        ctx.status = 401;
+        return ctx;
+      }
+
+      console.log("shop redact called");
+      const { shop_domain } = JSON.parse(body.toString());
+      await dbUtils.deleteShopInfo(shop_domain);
+      ctx.body = "OK";
+      ctx.status = 200;
+      return ctx;
   });
 
   // GDPR mandatory route. RudderStack is not storing any customer releated
   // information.
-  router.post("/customers/data_request", verifyRequest({ 
-    returnHeader: true, accessMode: 'offline', }), async ctx => {
+  router.post("/customers/data_request", async ctx => {
+    const { success } = await validateHmac(ctx);
+    if (!success) {
+      ctx.body = "Unauthorized";
+      ctx.status = 401;
+      return ctx;
+    }
     ctx.body = "OK";
     ctx.status = 200;
     return ctx;
@@ -261,8 +289,13 @@ app.prepare().then(async () => {
   
   // GDPR mandatory route. RudderStack is not storing any customer releated
   // information.
-  router.post("/customers/redact", verifyRequest({ 
-    returnHeader: true, accessMode: 'offline', }), async ctx => {
+  router.post("/customers/redact", async ctx => {
+    const { success, body } = await validateHmac(ctx);
+    if (!success) {
+      ctx.body = "Unauthorized";
+      ctx.status = 401;
+      return ctx;
+    }
     ctx.body = "OK";
     ctx.status = 200;
     return ctx;

@@ -1,3 +1,5 @@
+import crypto from "crypto";
+import getRawBody from "raw-body";
 import Shopify, { DataType } from "@shopify/shopify-api";
 // import { //bugsnagClient, logger } from "@rudder/rudder-service";
 import { topicMapping } from "../constants/topic-mapping";
@@ -143,7 +145,7 @@ export const verifyAndDelete = async (shop) => {
     try {
       await client.get({ path: "webhooks/count" });
     } catch (err) {
-      console.log(`[verifyAndDelete] error: ${err}`);
+      console.log(`[verifyAndDelete] error: ${err.message}`);
       invalidated = true;
     }
 
@@ -161,3 +163,19 @@ export const verifyAndDelete = async (shop) => {
     console.log(`[verifyAndDelete] error: ${error}`);
   }
 }
+
+
+export const validateHmac = async (ctx) => {
+  const body = await getRawBody(ctx.req);
+  const generatedHmac = 
+    crypto
+      .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
+      .update(body)
+      .digest('base64');
+  
+  const receivedHmac = ctx.header["x-shopify-hmac-sha256"];
+  console.log("generated hmac", generatedHmac);
+  console.log("received hmac", receivedHmac);
+
+  return { success: generatedHmac === receivedHmac, body };
+};
