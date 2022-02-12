@@ -15,7 +15,7 @@ import {
 } from "./service/process";
 import { DBConnector } from "./dbUtils/dbConnector";
 import { dbUtils } from "./dbUtils/helpers";
-import { verifyAndDelete, validateHmac } from "./webhooks/helper";
+import { verifyAndDelete, validateHmac, setContentSecurityHeader } from "./webhooks/helper";
 // import { createServiceApp } from "@rudder/rudder-service";
 // import serviceOptions from "./monitoring/serviceOptions";
 // import { //bugsnagClient, logger } from "@rudder/rudder-service";
@@ -78,6 +78,7 @@ app.prepare().then(async () => {
   // server.use(bodyParser());
   // server.use(serviceRoutes());
   // server.use(session(app));
+  server.use(setContentSecurityHeader);
 
   server.use(
     createShopifyAuth({
@@ -91,6 +92,12 @@ app.prepare().then(async () => {
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
         console.log(`The token is ${accessToken}`);
         console.log("inside Shopify afterAuth");
+
+        // ctx.cookies.set("shopOrigin", shop, {
+        //   httpOnly: false,
+        //   secure: true,
+        //   sameSite: "none",
+        // });
 
         //bugsnagClient.notify("TEST ALERT");
 
@@ -303,7 +310,7 @@ app.prepare().then(async () => {
 
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
-  router.get("(.*)", async (ctx) => {
+  router.get("/", async (ctx) => {
     
     console.log("INSIDE THIS ROUTE");
     
