@@ -159,7 +159,7 @@ app.prepare().then(async () => {
     "/webhooks",
     async (ctx) => {
     try {
-      const { success, body } = await validateHmac(ctx);
+      const { success } = await validateHmac(ctx);
       console.log("validation stauts", success);
       if (!success) {
         ctx.body = "Unauthorized";
@@ -297,7 +297,7 @@ app.prepare().then(async () => {
   // GDPR mandatory route. RudderStack is not storing any customer releated
   // information.
   router.post("/customers/redact", async ctx => {
-    const { success, body } = await validateHmac(ctx);
+    const { success } = await validateHmac(ctx);
     if (!success) {
       ctx.body = "Unauthorized";
       ctx.status = 401;
