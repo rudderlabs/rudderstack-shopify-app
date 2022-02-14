@@ -310,6 +310,16 @@ app.prepare().then(async () => {
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("/", async (ctx) => {
+
+    if (ctx.header["x-shopify-hmac-sha256"]) {
+      const { success } = await validateHmac(ctx);
+      if (!success) {
+        ctx.body = "Unauthorized";
+        ctx.status = 401;
+        return ctx;
+      }
+    }
+
     logger.info("INSIDE THIS ROUTE");
     
     const shop = ctx.query.shop;
