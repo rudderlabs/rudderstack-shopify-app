@@ -2,7 +2,7 @@
 // add a node-cache layer in front of the DB
 import mongoose from "mongoose";
 import StoreConfig from "./models/storeConfig";
-// import { logger, //bugsnagClient } from "@rudder/rudder-service";
+import { logger, bugsnagClient } from "@rudder/rudder-service";
 
 const getDataByShop = async (shop) => {
   console.log("Inside shop getData function");

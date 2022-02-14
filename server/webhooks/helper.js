@@ -2,7 +2,7 @@ import crypto from "crypto";
 import getRawBody from "raw-body";
 import helmet from "koa-helmet";
 import Shopify, { DataType } from "@shopify/shopify-api";
-// import { //bugsnagClient, logger } from "@rudder/rudder-service";
+import { bugsnagClient, logger } from "@rudder/rudder-service";
 import { topicMapping } from "../constants/topic-mapping";
 import { dbUtils } from "../dbUtils/helpers";
 
@@ -153,12 +153,12 @@ export const verifyAndDelete = async (shop) => {
     // check if token is invalidated
     if (invalidated) {
       await dbUtils.deleteShopInfo(shop);
-      //bugsnagClient.notify("shop deletion alert");
+      bugsnagClient.notify("shop deletion alert");
     } else {
       // shopify random uninstall call. simply ignore
       // AND NOTIFY BUGSNAG
       console.log("random uninstall called");
-      //bugsnagClient.notify("falsy uninstall triggered");
+      bugsnagClient.notify("falsy uninstall triggered");
     }
   } catch (error) {
     console.log(`[verifyAndDelete] error: ${error}`);

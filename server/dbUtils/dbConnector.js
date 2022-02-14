@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-// import { logger } from "@rudder/rudder-service";
+import { logger } from "@rudder/rudder-service";
 
 export class DBConnector {
   constructor() {

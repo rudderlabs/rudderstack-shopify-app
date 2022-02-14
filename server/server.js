@@ -16,10 +16,10 @@ import {
 import { DBConnector } from "./dbUtils/dbConnector";
 import { dbUtils } from "./dbUtils/helpers";
 import { verifyAndDelete, validateHmac, setContentSecurityHeader } from "./webhooks/helper";
-// import { createServiceApp } from "@rudder/rudder-service";
-// import serviceOptions from "./monitoring/serviceOptions";
-// import { //bugsnagClient, logger } from "@rudder/rudder-service";
-// import { serviceRoutes } from '@rudder/rudder-service';
+import { createServiceApp } from "@rudder/rudder-service";
+import serviceOptions from "./monitoring/serviceOptions";
+import { bugsnagClient, logger } from "@rudder/rudder-service";
+import { serviceRoutes } from '@rudder/rudder-service';
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -71,13 +71,12 @@ Shopify.Context.initialize({
 const ACTIVE_SHOPIFY_SHOPS = {};
 
 app.prepare().then(async () => {
-  const server = new Koa();
-  // const server = createServiceApp(serviceOptions);
+  // const server = new Koa();
+  const server = createServiceApp(serviceOptions);
   const router = new Router();
   server.keys = [Shopify.Context.API_SECRET_KEY];
   // server.use(bodyParser());
-  // server.use(serviceRoutes());
-  // server.use(session(app));
+  server.use(serviceRoutes());
   server.use(setContentSecurityHeader);
 
   server.use(
@@ -99,7 +98,7 @@ app.prepare().then(async () => {
         //   sameSite: "none",
         // });
 
-        //bugsnagClient.notify("TEST ALERT");
+        bugsnagClient.notify("TEST ALERT");
 
         try {
           const currentShopInfo = await dbUtils.getDataByShop(shop);

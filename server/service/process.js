@@ -8,7 +8,7 @@ import {
   updateScriptTag
 } from "../webhooks/helper";
 import { dbUtils } from "../dbUtils/helpers";
-// import { //bugsnagClient, logger } from "@rudder/rudder-service";
+import { bugsnagClient, logger } from "@rudder/rudder-service";
 
 const embedTopicInUrl = (url, topic) => {
   const enrichedUrl = new URL(url);
@@ -71,7 +71,7 @@ export const updateRudderWebhooks = async (rudderWebhookUrl, shop) => {
   }));
 
   if (failedStatus) {
-    //bugsnagClient.notify(`webhook update failed for: ${shop}`);
+    bugsnagClient.notify(`webhook update failed for: ${shop}`);
     throw new Error("update webhooks failed");
   }
 
@@ -113,7 +113,7 @@ export const registerRudderWebhooks = async (rudderWebhookUrl, shop) => {
 
   if (failedStatus) {
     console.log("register webhook failed");
-    //bugsnagClient.notify(`register webhook failed for : ${shop}`);
+    bugsnagClient.notify(`register webhook failed for : ${shop}`);
     throw new Error("register webhook failed");
   }
   
@@ -189,7 +189,7 @@ export const registerWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
 
   if (scriptTagFailed) {
     console.log("script tag register failed");
-    //bugsnagClient.notify(`script tag api register failed for: ${shop}`);
+    bugsnagClient.notify(`script tag api register failed for: ${shop}`);
     throw new Error("script tag register failed");
   }
   
@@ -229,7 +229,7 @@ export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
   }
 
   if (updateWebhookFailed) {
-    //bugsnagClient.notify('update webhook call failed');
+    bugsnagClient.notify('update webhook call failed');
     throw new Error("update webhooks failed");
   }
 
@@ -245,7 +245,7 @@ export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
   console.log("DB Updated for update call");
 
   if (updateScriptFailed) {
-    //bugsnagClient.notify('update script tag call failed');
+    bugsnagClient.notify('update script tag call failed');
     throw new Error("script tag update failed");
   }
 };

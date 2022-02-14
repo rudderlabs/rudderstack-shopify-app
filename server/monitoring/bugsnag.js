@@ -6,7 +6,7 @@ const bugsnag = {
     redactedKeys: ['authorization', 'password', 'token'],
 };
 
-// export const //bugsnagClient = Bugsnag.createClient({
+// export const bugsnagClient = Bugsnag.createClient({
 //     apiKey: process.env.API_BUGSNAG_KEY,
 //     appVersion: version,
 // });
