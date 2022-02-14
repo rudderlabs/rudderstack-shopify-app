@@ -1,3 +1,6 @@
+import crypto from "crypto";
+import getRawBody from "raw-body";
+import helmet from "koa-helmet";
 import Shopify, { DataType } from "@shopify/shopify-api";
 import { bugsnagClient, logger } from "@rudder/rudder-service";
 import { topicMapping } from "../constants/topic-mapping";
@@ -143,7 +146,7 @@ export const verifyAndDelete = async (shop) => {
     try {
       await client.get({ path: "webhooks/count" });
     } catch (err) {
-      logger.error(`[verifyAndDelete] error: ${err}`);
+      logger.error(`[verifyAndDelete] error: ${err.message}`);
       invalidated = true;
     }
 
@@ -161,3 +164,59 @@ export const verifyAndDelete = async (shop) => {
     logger.error(`[verifyAndDelete] error: ${error}`);
   }
 }
+
+
+export const validateHmac = async (ctx) => {
+  const body = await getRawBody(ctx.req);
+  const generatedHmac = 
+    crypto
+      .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
+      .update(body)
+      .digest('base64');
+  
+  const receivedHmac = ctx.header["x-shopify-hmac-sha256"];
+  logger.info("generated hmac", generatedHmac);
+  logger.info("received hmac", receivedHmac);
+
+  return { success: generatedHmac === receivedHmac, body };
+};
+
+
+export const setContentSecurityHeader = (ctx, next) => {
+
+  // logger.info("cookie information", ctx.cookies.get("shopOrigin"));
+
+  // Cookie is set after auth
+  // if (ctx.cookies.get("shopOrigin")) {
+  //   return helmet.contentSecurityPolicy({
+  //     directives: {
+  //       defaultSrc: helmet.contentSecurityPolicy.dangerouslyDisableDefaultSrc,
+  //       frameAncestors: [
+  //         `https://${ctx.cookies.get("shopOrigin")}`,
+  //         "https://admin.shopify.com",
+  //       ],
+  //     },
+  //   })(ctx, next);
+  // } else {
+  //   // Before auth => no cookie set...
+  //   return helmet.contentSecurityPolicy({
+  //     directives: {
+  //       defaultSrc: helmet.contentSecurityPolicy.dangerouslyDisableDefaultSrc,
+  //       frameAncestors: [
+  //         `https://${ctx.query.shop}`,
+  //         "https://admin.shopify.com",
+  //       ],
+  //     },
+  //   })(ctx, next);
+  // }
+
+  return helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: helmet.contentSecurityPolicy.dangerouslyDisableDefaultSrc,
+      frameAncestors: [
+        `https://${ctx.query.shop}`,
+        "https://admin.shopify.com",
+      ],
+    },
+  })(ctx, next);
+};

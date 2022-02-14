@@ -7,7 +7,7 @@ import Shopify, { ApiVersion } from "@shopify/shopify-api";
 import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
-import bodyParser from "koa-body-parser";
+// import bodyParser from "koa-body-parser";
 import {
   fetchRudderWebhookUrl,
   registerWebhooksAndScriptTag,
@@ -15,7 +15,7 @@ import {
 } from "./service/process";
 import { DBConnector } from "./dbUtils/dbConnector";
 import { dbUtils } from "./dbUtils/helpers";
-import { verifyAndDelete } from "./webhooks/helper";
+import { verifyAndDelete, validateHmac, setContentSecurityHeader } from "./webhooks/helper";
 import { createServiceApp } from "@rudder/rudder-service";
 import serviceOptions from "./monitoring/serviceOptions";
 import { bugsnagClient, logger } from "@rudder/rudder-service";
@@ -75,18 +75,28 @@ app.prepare().then(async () => {
   const server = createServiceApp(serviceOptions);
   const router = new Router();
   server.keys = [Shopify.Context.API_SECRET_KEY];
-  server.use(bodyParser());
+  // server.use(bodyParser());
   server.use(serviceRoutes());
+  server.use(setContentSecurityHeader);
+
   server.use(
     createShopifyAuth({
       accessMode: "offline",
       async afterAuth(ctx) {
         // Access token and shop available in ctx.state.shopify
+        // const { shop, accessToken, scope } = ctx.state.shopify;
+        logger.info("SESSION ", ctx.session);
         const { shop, accessToken, scope } = ctx.state.shopify;
         const host = ctx.query.host;
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
-        logger.debug(`The token is ${accessToken}`);
-        logger.debug("inside Shopify afterAuth");
+        // logger.info(`The token is ${accessToken}`);
+        // logger.info("inside Shopify afterAuth");
+
+        // ctx.cookies.set("shopOrigin", shop, {
+        //   httpOnly: false,
+        //   secure: true,
+        //   sameSite: "none",
+        // });
 
         bugsnagClient.notify("TEST ALERT");
 
@@ -124,7 +134,7 @@ app.prepare().then(async () => {
           },
         });
 
-        logger.debug(`RESPONSE: ${JSON.stringify(response)}`);
+        logger.info(`RESPONSE: ${JSON.stringify(response)}`);
 
         if (!response.success) {
           logger.error(
@@ -144,13 +154,22 @@ app.prepare().then(async () => {
     ctx.res.statusCode = 200;
   };
 
-  router.post("/webhooks", async (ctx) => {
+  router.post(
+    "/webhooks",
+    async (ctx) => {
     try {
+      const { success } = await validateHmac(ctx);
+      logger.info("validation stauts", success);
+      if (!success) {
+        ctx.body = "Unauthorized";
+        ctx.status = 401;
+        return ctx;
+      }
+
       logger.info("inside /webhooks route");
-      logger.info(`CTX BODY :${JSON.stringify(ctx.request.body)}`);
       logger.info(`CTX QUERY: ${JSON.stringify(ctx.request.query)}`);
       logger.info(`CTX: ${JSON.stringify(ctx)}`);
-      
+
       const { shop } = ctx.request.query;
       await verifyAndDelete(shop);
       delete ACTIVE_SHOPIFY_SHOPS[shop];
@@ -212,9 +231,10 @@ app.prepare().then(async () => {
        returnHeader: true
     }), async (ctx) => {
     try {
+      logger.info("fetch/rudder-webhook ctx header", ctx.header);
       const shop = ctx.get("shop");
       const rudderWebhookUrl = await fetchRudderWebhookUrl(shop);
-      logger.debug(`FROM FETCH ROUTE :${rudderWebhookUrl}`);
+      logger.info(`FROM FETCH ROUTE :${rudderWebhookUrl}`);
       ctx.body = {
         rudderWebhookUrl: rudderWebhookUrl,
       };
@@ -241,19 +261,33 @@ app.prepare().then(async () => {
   });
 
   // GDPR mandatory route. Deleting shop information here
-  router.post("/shop/redact", verifyRequest({
-     returnHeader: true, accessMode: 'offline', }), async ctx => {
-    const { shop_domain } = ctx.request.body;
-    await dbUtils.deleteShopInfo(shop_domain);
-    ctx.body = "OK";
-    ctx.status = 200;
-    return ctx;
+  router.post(
+    "/shop/redact", 
+    async ctx => {
+      const { success, body } = await validateHmac(ctx);
+      if (!success) {
+        ctx.body = "Unauthorized";
+        ctx.status = 401;
+        return ctx;
+      }
+
+      logger.info("shop redact called");
+      const { shop_domain } = JSON.parse(body.toString());
+      await dbUtils.deleteShopInfo(shop_domain);
+      ctx.body = "OK";
+      ctx.status = 200;
+      return ctx;
   });
 
   // GDPR mandatory route. RudderStack is not storing any customer releated
   // information.
-  router.post("/customers/data_request", verifyRequest({ 
-    returnHeader: true, accessMode: 'offline', }), async ctx => {
+  router.post("/customers/data_request", async ctx => {
+    const { success } = await validateHmac(ctx);
+    if (!success) {
+      ctx.body = "Unauthorized";
+      ctx.status = 401;
+      return ctx;
+    }
     ctx.body = "OK";
     ctx.status = 200;
     return ctx;
@@ -261,8 +295,13 @@ app.prepare().then(async () => {
   
   // GDPR mandatory route. RudderStack is not storing any customer releated
   // information.
-  router.post("/customers/redact", verifyRequest({ 
-    returnHeader: true, accessMode: 'offline', }), async ctx => {
+  router.post("/customers/redact", async ctx => {
+    const { success } = await validateHmac(ctx);
+    if (!success) {
+      ctx.body = "Unauthorized";
+      ctx.status = 401;
+      return ctx;
+    }
     ctx.body = "OK";
     ctx.status = 200;
     return ctx;
@@ -270,9 +309,18 @@ app.prepare().then(async () => {
 
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
-  router.get("(.*)", async (ctx) => {
-    
-    logger.debug("INSIDE THIS ROUTE");
+  router.get("/", async (ctx) => {
+
+    if (ctx.header["x-shopify-hmac-sha256"]) {
+      const { success } = await validateHmac(ctx);
+      if (!success) {
+        ctx.body = "Unauthorized";
+        ctx.status = 401;
+        return ctx;
+      }
+    }
+
+    logger.info("INSIDE THIS ROUTE");
     
     const shop = ctx.query.shop;
     if (!shop) {
@@ -283,10 +331,10 @@ app.prepare().then(async () => {
 
     // This shop hasn't been seen yet, go through OAuth to create a session
     if (ACTIVE_SHOPIFY_SHOPS[shop] === undefined || !ctx.query.host) {
-      logger.debug("redirecting to auth/shop");
+      logger.info("redirecting to auth/shop");
       ctx.redirect(`/auth?shop=${shop}`);
     } else {
-      logger.debug("going to handleRequest");
+      logger.info("going to handleRequest");
       await handleRequest(ctx);
     }
   });

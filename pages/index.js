@@ -66,14 +66,14 @@ function Index() {
         (storedDPUrl, savedWriteKey) => {
           performUpdates(storedDPUrl, savedWriteKey);
           setIsConfigPresent(true);
-          console.log("[onSuccess] isConfigPresent ", isConfigPresent);
+          // console.log("[onSuccess] isConfigPresent ", isConfigPresent);
         },
         (errMessage) => {
           showNotification(errMessage);
-          console.log("[onError] isConfigPresent ", isConfigPresent);
+          // console.log("[onError] isConfigPresent ", isConfigPresent);
         }
       );
-      console.log("isConfigPresent ", isConfigPresent);
+      // console.log("isConfigPresent ", isConfigPresent);
       setIsLoading(false);
     };
     asyncFetch();
@@ -82,7 +82,7 @@ function Index() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     showNotification("Processing. Please wait.");
-    console.log("[dataplaneURL]", currentDataplaneURL);
+    // console.log("[dataplaneURL]", currentDataplaneURL);
 
     const [formattedUrl, formattedWriteKey] = formatInputs(
       currentDataplaneURL,
@@ -90,13 +90,13 @@ function Index() {
     );
     const rudderSourceWebhook = `${formattedUrl}/v1/webhook?writeKey=${currentWriteKey}`;
 
-    console.log("formatted url from Form: ", formattedUrl);
-    console.log("rudder source webhook: ", rudderSourceWebhook);
+    // console.log("formatted url from Form: ", formattedUrl);
+    // console.log("rudder source webhook: ", rudderSourceWebhook);
 
     const onSuccess = (message) => {
       performUpdates(formattedUrl, formattedWriteKey);
       setIsConfigPresent(true);
-      console.log(message);
+      // console.log(message);
       showNotification(message);
       setIsSubmitting(false);
     };
@@ -107,16 +107,14 @@ function Index() {
       setIsSubmitting(false);
     };
 
-    // TODO: should session token be stored in state on app component mount?
-    // token seems to be rotated every 60 seconds.
     const token = await getSessionToken(app);
-    console.log("token fetched", token);
+    // console.log("token fetched", token);
     if (isConfigPresent) {
       await updateWebHooks(rudderSourceWebhook, token, onSuccess, onError);
     } else {
       await registerWebHooks(rudderSourceWebhook, token, onSuccess, onError);
     }
-    console.log("check ", isSubmitting);
+    // console.log("check ", isSubmitting);
   };
 
   if (isLoading) {
