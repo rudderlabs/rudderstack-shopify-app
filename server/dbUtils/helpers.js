@@ -5,9 +5,9 @@ import StoreConfig from "./models/storeConfig";
 import { logger, bugsnagClient } from "@rudder/rudder-service";
 
 const getDataByShop = async (shop) => {
-  console.log("Inside shop getData function");
+  logger.info("Inside shop getData function");
   const storeInfo = await StoreConfig.findOne({ shopname: shop });
-  console.log(`Store Info: ${storeInfo}`);
+  logger.info(`Store Info: ${storeInfo}`);
   return storeInfo;
 };
 
@@ -25,29 +25,29 @@ const getConfigByShop = async (shop) => {
 };
 
 const insertShopInfo = async (shopData) => {
-  console.log("Inside shop insert function");
+  logger.info("Inside shop insert function");
   await StoreConfig.create({
     ...shopData,
     _id: mongoose.Types.ObjectId()
   });
-  console.log("Shop info inserted");
+  logger.info("Shop info inserted");
 };
 
 const updateShopInfo = async (shop, updateData) => {
-  console.log("Inside shop update function");
+  logger.info("Inside shop update function");
   await StoreConfig.findOneAndUpdate(
     { shopname: shop},
     updateData
   );
-  console.log('Shop info updated');
+  logger.info('Shop info updated');
 }
 
 const deleteShopInfo = async (shop) => {
-  console.log("Inside shop delete function");
+  logger.info("Inside shop delete function");
   await StoreConfig.findOneAndDelete(
     { shopname: shop }
   );
-  console.log(`Config deleted for shop ${shop}`);
+  logger.info(`Config deleted for shop ${shop}`);
 };
 
 export const dbUtils = {

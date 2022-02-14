@@ -37,7 +37,7 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
     address: `${webhookUrl}`,
     format: "json",
   };
-  console.log(`[registerWebhooks] topic, webhookUrl ${topic} ${webhookUrl}`);
+  logger.info(`[registerWebhooks] topic, webhookUrl ${topic} ${webhookUrl}`);
   const response = await client.post({
     path: "webhooks",
     data: {
@@ -45,8 +45,8 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
     },
     type: DataType.JSON,
   });
-  console.log(`[registerWebhooks] topic, webhookUrl ${topic} ${webhookUrl}`);
-  console.log(`RESPONSE: ${JSON.stringify(response.body)}`);
+  logger.info(`[registerWebhooks] topic, webhookUrl ${topic} ${webhookUrl}`);
+  logger.info(`RESPONSE: ${JSON.stringify(response.body)}`);
   return response.body.webhook.id;
 };
 
@@ -57,11 +57,11 @@ export const registerWebhooks = async (webhookUrl, topic, shop, accessToken) => 
  * @param {*} shop 
  */
 export const registerScriptTag = async (accessToken, rudderWebhookUrl, shop) => {
-  console.log("WEBHOOK URL ", rudderWebhookUrl);
+  logger.info("WEBHOOK URL ", rudderWebhookUrl);
   const wrappedUrl = new URL(rudderWebhookUrl);
   const writeKey = wrappedUrl.searchParams.get('writeKey');
   const dataPlane = wrappedUrl.hostname;
-  console.log("DATAPLANE URL ", dataPlane);
+  logger.info("DATAPLANE URL ", dataPlane);
   const trackingServerBaseUrl = process.env.SHOPIFY_TRACKER_URL || 'shopify-tracker.dev-rudder.rudderlabs.com';
   const scriptTagUrl = `https:\/\/${trackingServerBaseUrl}\/load?writeKey=${writeKey}&dataPlaneUrl=${dataPlane}`;
 
@@ -110,7 +110,7 @@ export const updateScriptTag = async (accessToken, rudderWebhookUrl, shop, scrip
 export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) => {
   const client = new Shopify.Clients.Rest(shop, accessToken);
 
-  console.log("inside update function");
+  logger.info("inside update function");
   const webhookToUpdate = {
     id: webhookId,
     address: webhookUrl,
@@ -123,7 +123,7 @@ export const updateWebhooks = async (webhookId, webhookUrl, shop, accessToken) =
     type: DataType.JSON,
   });
 
-  console.log(`RESPONSE: ${JSON.stringify(response)}`);
+  logger.info(`RESPONSE: ${JSON.stringify(response)}`);
   return response.body.webhook.id;
 };
 
@@ -136,7 +136,7 @@ export const verifyAndDelete = async (shop) => {
   try {
     const config = await dbUtils.getConfigByShop(shop);
     if (!config || !config.accessToken) {
-      console.log(`[verifyAndDelete] config not found for shop: ${shop}`);
+      logger.info(`[verifyAndDelete] config not found for shop: ${shop}`);
       return;
     }
     const { accessToken } = config;
@@ -146,7 +146,7 @@ export const verifyAndDelete = async (shop) => {
     try {
       await client.get({ path: "webhooks/count" });
     } catch (err) {
-      console.log(`[verifyAndDelete] error: ${err.message}`);
+      logger.error(`[verifyAndDelete] error: ${err.message}`);
       invalidated = true;
     }
 
@@ -157,11 +157,11 @@ export const verifyAndDelete = async (shop) => {
     } else {
       // shopify random uninstall call. simply ignore
       // AND NOTIFY BUGSNAG
-      console.log("random uninstall called");
+      logger.info("random uninstall called");
       bugsnagClient.notify("falsy uninstall triggered");
     }
   } catch (error) {
-    console.log(`[verifyAndDelete] error: ${error}`);
+    logger.error(`[verifyAndDelete] error: ${error}`);
   }
 }
 
@@ -175,8 +175,8 @@ export const validateHmac = async (ctx) => {
       .digest('base64');
   
   const receivedHmac = ctx.header["x-shopify-hmac-sha256"];
-  console.log("generated hmac", generatedHmac);
-  console.log("received hmac", receivedHmac);
+  logger.info("generated hmac", generatedHmac);
+  logger.info("received hmac", receivedHmac);
 
   return { success: generatedHmac === receivedHmac, body };
 };
@@ -184,7 +184,7 @@ export const validateHmac = async (ctx) => {
 
 export const setContentSecurityHeader = (ctx, next) => {
 
-  // console.log("cookie information", ctx.cookies.get("shopOrigin"));
+  // logger.info("cookie information", ctx.cookies.get("shopOrigin"));
 
   // Cookie is set after auth
   // if (ctx.cookies.get("shopOrigin")) {
