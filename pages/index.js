@@ -9,6 +9,7 @@ import {
   Frame,
   Loading,
   Toast,
+  Banner
 } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { getSessionToken } from "@shopify/app-bridge-utils";
@@ -22,6 +23,7 @@ import {
 function Index() {
   const app = useAppBridge();
   //const aFetch = authenticatedFetch(app);
+  const [showBanner, setShowBanner] = useState(true);
   const [currentDataplaneURL, setCurrentDataPlaneUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -127,7 +129,23 @@ function Index() {
 
   return (
     <Page>
-      <Heading>Configure RudderStack</Heading>
+      {
+        showBanner && 
+        (
+          <Banner title="Configuration Steps" onDismiss={() => setShowBanner(false)}>
+            <ul>
+              <li>Create a Shopify Source in RudderStack Dashboard.</li>
+              <li>Connect the source to an existing or new destination in RudderStack Dashboard.</li>
+              <li>Copy the Source WriteKey and the Data Plane Url.</li>
+              <li>Click on Submit</li>
+            </ul>
+            <p><strong>You are all set!</strong></p>
+            <p>For more information on how to create source and destination, visit our <a href="https://www.rudderstack.com/docs/connections/adding-source-and-destination-rudderstack/" target="_blank">documentation</a>
+            </p>
+          </Banner>
+        )
+      }
+      <br/>
       <Form onSubmit={handleSubmit}>
         <FormLayout>
           <TextField
