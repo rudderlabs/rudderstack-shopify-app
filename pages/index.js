@@ -138,6 +138,8 @@ function Index() {
               <li>Connect the source to an existing or new destination in RudderStack Dashboard.</li>
               <li>Copy the Source WriteKey and the Data Plane Url.</li>
               <li>Click on Submit</li>
+              <li>After submitting, if required, you can also change your Data Plane Url or Source Write Key.</li>
+              <li>And Click on Update.</li>
             </ul>
             <p><strong>You are all set!</strong></p>
             <p>For more information on how to create source and destination, visit our <a href="https://www.rudderstack.com/docs/connections/adding-source-and-destination-rudderstack/" target="_blank">documentation</a>
