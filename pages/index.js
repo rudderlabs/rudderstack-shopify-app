@@ -135,10 +135,10 @@ function Index() {
           <Banner title="Configuration Steps" status="info" onDismiss={() => setShowBanner(false)}>
             <ol>
               <li>Log into your <a href="https://app.rudderstack.com/" target="_blank" rel="noopener noreferrer">RudderStack dashboard</a>. Note the data plane URL.</li>
-              <li>Create a new Shopify source. Note the write key present in the source details page. Refer to <a href="https://www.rudderstack.com/docs/get-started/installing-and-setting-up-rudderstack/sending-test-events/#get-the-source-write-key" target="_blank" rel="noopener noreferrer">this</a>guide to get the write key.</li>
+              <li>Create a new Shopify source. Note the write key present in the source details page. Refer to <a href="https://www.rudderstack.com/docs/get-started/installing-and-setting-up-rudderstack/sending-test-events/#get-the-source-write-key" target="_blank" rel="noopener noreferrer">this</a> guide to get the write key.</li>
               <li>Connect the source to an existing or new destination. For more details, refer to our <a href="https://www.rudderstack.com/docs/connections/adding-source-and-destination-rudderstack/" target="_blank" rel="noopener noreferrer">documentation.</a></li>
               <li>Return to your Shopify store and click on the RudderStack app you installed.</li>
-              <li>Enter the data plane URL and the source write key you copied above and click on <strong>Submit</strong>. For more details, refer to our <a href="https://www.rudderstack.com/docs/faqs/#2-what-is-a-data-plane-url-where-do-i-get-it" target="_blank" rel="noopener noreferrer">faq</a>page</li>
+              <li>Enter the data plane URL and the source write key you copied above and click on <strong>Submit</strong>. For more details, refer to our <a href="https://www.rudderstack.com/docs/faqs/#2-what-is-a-data-plane-url-where-do-i-get-it" target="_blank" rel="noopener noreferrer">faq</a> page.</li>
               <li>You can also update these fields later with a different write key and data plane URL and click on <strong>Update</strong>.</li>
             </ol>
             <p><strong>You are all set!</strong></p>
