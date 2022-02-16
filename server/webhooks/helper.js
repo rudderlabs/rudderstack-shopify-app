@@ -156,7 +156,6 @@ export const verifyAndDelete = async (shop) => {
       bugsnagClient.notify("shop deletion alert");
     } else {
       // shopify random uninstall call. simply ignore
-      // AND NOTIFY BUGSNAG
       logger.info("random uninstall called");
       bugsnagClient.notify("falsy uninstall triggered");
     }
@@ -175,41 +174,11 @@ export const validateHmac = async (ctx) => {
       .digest('base64');
   
   const receivedHmac = ctx.header["x-shopify-hmac-sha256"];
-  logger.info("generated hmac", generatedHmac);
-  logger.info("received hmac", receivedHmac);
-
   return { success: generatedHmac === receivedHmac, body };
 };
 
 
 export const setContentSecurityHeader = (ctx, next) => {
-
-  // logger.info("cookie information", ctx.cookies.get("shopOrigin"));
-
-  // Cookie is set after auth
-  // if (ctx.cookies.get("shopOrigin")) {
-  //   return helmet.contentSecurityPolicy({
-  //     directives: {
-  //       defaultSrc: helmet.contentSecurityPolicy.dangerouslyDisableDefaultSrc,
-  //       frameAncestors: [
-  //         `https://${ctx.cookies.get("shopOrigin")}`,
-  //         "https://admin.shopify.com",
-  //       ],
-  //     },
-  //   })(ctx, next);
-  // } else {
-  //   // Before auth => no cookie set...
-  //   return helmet.contentSecurityPolicy({
-  //     directives: {
-  //       defaultSrc: helmet.contentSecurityPolicy.dangerouslyDisableDefaultSrc,
-  //       frameAncestors: [
-  //         `https://${ctx.query.shop}`,
-  //         "https://admin.shopify.com",
-  //       ],
-  //     },
-  //   })(ctx, next);
-  // }
-
   return helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: helmet.contentSecurityPolicy.dangerouslyDisableDefaultSrc,
