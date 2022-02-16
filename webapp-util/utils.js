@@ -91,7 +91,7 @@ export const formatInputs = (url, writeKey) => {
     formattedUrl = `https://${formattedUrl}`;
   }
   else if (formattedUrl.startsWith('http://')) {
-    formattedUrl = formattedUrl.replace(/http:\/\/|\/$/g, "");
+    formattedUrl = formattedUrl.replace(/^http:\/\//g, "");
     formattedUrl = `https://${formattedUrl}`;
   }
 
