@@ -42,17 +42,10 @@ DBConnector.setConfigFromEnv()
   });
 
   const REQUIRED_SCOPES = [
-    // "write_products",
-    // "write_customers",
-    // "write_draft_orders",
     "read_checkouts",
-    // "write_checkouts",
     "read_orders",
     "read_customers",
-    // "write_orders",
     "read_fulfillments",
-    // "write_fulfillments",
-    // "read_script_tags",
     "write_script_tags"
   ];
 
