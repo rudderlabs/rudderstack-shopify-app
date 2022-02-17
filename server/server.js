@@ -41,19 +41,20 @@ DBConnector.setConfigFromEnv()
     process.exit(1);
   });
 
-const REQUIRED_SCOPES = [
-  "write_products",
-  "write_customers",
-  "write_draft_orders",
-  "read_checkouts",
-  "write_checkouts",
-  "read_orders",
-  "write_orders",
-  "read_fulfillments",
-  "write_fulfillments",
-  "read_script_tags",
-  "write_script_tags"
-];
+  const REQUIRED_SCOPES = [
+    // "write_products",
+    // "write_customers",
+    // "write_draft_orders",
+    "read_checkouts",
+    // "write_checkouts",
+    "read_orders",
+    "read_customers",
+    // "write_orders",
+    "read_fulfillments",
+    // "write_fulfillments",
+    // "read_script_tags",
+    "write_script_tags"
+  ];
 
 Shopify.Context.initialize({
   API_KEY: process.env.SHOPIFY_API_KEY,
