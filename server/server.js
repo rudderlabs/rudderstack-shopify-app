@@ -319,8 +319,6 @@ app.prepare().then(async () => {
         return ctx;
       }
     }
-
-    logger.info("INSIDE THIS ROUTE");
     
     const shop = ctx.query.shop;
     if (!shop) {
