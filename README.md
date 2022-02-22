@@ -31,9 +31,14 @@ The Rudderstack Shopify app utilizes webhook subscription to subscribe to server
 
 
 ## Getting started
+### Pre-requisites
+1. shopify-cli installed in local <br>
+2. Login to shopify account using `shopify login` <br>
 
-1. Install it on your Store through app listing <br>
-2. Install it on your Store via local ngrok tunnel
+To run the app locally, following are the steps:<br>
+1. npm install <br>
+2. Add .env with the `DB` credentials, `SHOPIFY_API_SECRET`, `SHOPIFY_API_KEY`, `BUGSNAG_KEY` and set `MODE=local`
+3. shopify app serve<br>
 
 ## Contribute
 
