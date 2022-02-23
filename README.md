@@ -1,30 +1,49 @@
-# Shopify App Node
+<p align="center">
+  <a href="https://rudderstack.com/">
+    <img src="https://user-images.githubusercontent.com/59817155/121357083-1c571300-c94f-11eb-8cc7-ce6df13855c9.png">
+  </a>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
-[![Build Status](https://travis-ci.com/Shopify/shopify-app-node.svg?branch=master)](https://travis-ci.com/Shopify/shopify-app-node)
+<p align="center"><b>The Customer Data Platform for Developers</b></p>
 
-Boilerplate to create an embedded Shopify app made with Node, [Next.js](https://nextjs.org/), [Shopify-koa-auth](https://github.com/Shopify/quilt/tree/master/packages/koa-shopify-auth), [Polaris](https://github.com/Shopify/polaris-react), and [App Bridge React](https://shopify.dev/tools/app-bridge/react-components).
+<p align="center">
+  <b>
+    <a href="https://rudderstack.com">Website</a>
+    ·
+    <a href="">Documentation</a>
+    ·
+    <a href="https://rudderstack.com/join-rudderstack-slack-community">Community Slack</a>
+  </b>
+</p>
 
-## Installation
+---
 
-Using the [Shopify CLI](https://github.com/Shopify/shopify-cli) run:
+# RudderStack app on Shopify
 
-```sh
-~/ $ shopify node create -n APP_NAME
-```
+This application lets you connect your Shopify store with RudderStack. Use it to track event-level data from Shopify and send it to your preferred tooling platforms via RudderStack.
 
-Or, fork and clone repo
+## Overview
 
-## Requirements
+With this application, you can track near real-time events both via the Shopify store (client-side) or webhooks (server-side) to capture various customer touchpoints related to your users' activities in Shopify. Then, route this data to your preferred RudderStack destination to get granular insights into your customers' journey, power your sales and marketing workflows, and inform your overall decision-making.
 
-- If you don’t have one, [create a Shopify partner account](https://partners.shopify.com/signup).
-- If you don’t have one, [create a Development store](https://help.shopify.com/en/partners/dashboard/development-stores#create-a-development-store) where you can install and test your app.
-- In the Partner dashboard, [create a new app](https://help.shopify.com/en/api/tools/partner-dashboard/your-apps#create-a-new-app). You’ll need this app’s API credentials during the setup process.
+## Features
+The Rudderstack Shopify app utilizes webhook subscription to subscribe to server side events as well as uses a smart tracking script to capture client side events from the store. This way, 100% accurate data about your store events is collected at Rudderstack
 
-## Usage
 
-This repository is used by [Shopify CLI](https://github.com/Shopify/shopify-cli) as a scaffold for Node apps. You can clone or fork it yourself, but it’s faster and easier to use Shopify App CLI, which handles additional routine development tasks for you.
+## Getting started
+### Pre-requisites
+1. shopify-cli installed in local <br>
+2. Login to shopify account using `shopify login` <br>
+
+To run the app locally, following are the steps:<br>
+1. npm install <br>
+2. Add .env with the `DB` credentials, `SHOPIFY_API_SECRET`, `SHOPIFY_API_KEY`, `BUGSNAG_KEY` and set `MODE=local`
+3. shopify app serve<br>
+
+## Contribute
+
+We would love to see you contribute to RudderStack Shopify app. Get more information on how to contribute [**here**](CONTRIBUTING.md).
 
 ## License
 
-This respository is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+The RudderStack Shopify app is released under the [**MIT License**](https://opensource.org/licenses/MIT).
