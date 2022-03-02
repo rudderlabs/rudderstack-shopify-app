@@ -64,6 +64,12 @@ Shopify.Context.initialize({
 // persist this object in your app.
 const ACTIVE_SHOPIFY_SHOPS = {};
 
+Shopify.Webhooks.Registry.addHandler("APP_UNINSTALLED", {
+  path: "/webhooks",
+  webhookHandler: async (topic, shop, body) =>
+    delete ACTIVE_SHOPIFY_SHOPS[shop],
+});
+
 app.prepare().then(async () => {
   // const server = new Koa();
   const server = createServiceApp(serviceOptions);
@@ -92,7 +98,6 @@ app.prepare().then(async () => {
         //   sameSite: "none",
         // });
 
-        bugsnagClient.notify("TEST ALERT");
 
         try {
           const currentShopInfo = await dbUtils.getDataByShop(shop);
@@ -116,23 +121,35 @@ app.prepare().then(async () => {
           logger.error(`error while querying DB: ${err}`);
         }
 
-        const response = await Shopify.Webhooks.Registry.register({
+        // const response = await Shopify.Webhooks.Registry.register({
+        //   shop,
+        //   accessToken,
+        //   path: `/webhooks?shop=${shop}`,
+        //   topic: "APP_UNINSTALLED",
+        //   webhookHandler: async (topic, shop, body) => {
+        //     delete ACTIVE_SHOPIFY_SHOPS[shop];
+        //     logger.info("this should be called on uninstall");
+        //     // verifyAndDelete(shop);
+        //   },
+        // });
+
+        // logger.info(`RESPONSE: ${JSON.stringify(response)}`);
+
+        // if (!response.success) {
+        //   logger.error(
+        //     `Failed to register APP_UNINSTALLED webhook: ${response.result}`
+        //   );
+        // }
+        const responses = await Shopify.Webhooks.Registry.register({
           shop,
           accessToken,
           path: `/webhooks?shop=${shop}`,
           topic: "APP_UNINSTALLED",
-          webhookHandler: async (topic, shop, body) => {
-            delete ACTIVE_SHOPIFY_SHOPS[shop];
-            logger.info("this should be called on uninstall");
-            // verifyAndDelete(shop);
-          },
         });
 
-        logger.info(`RESPONSE: ${JSON.stringify(response)}`);
-
-        if (!response.success) {
-          logger.error(
-            `Failed to register APP_UNINSTALLED webhook: ${response.result}`
+        if (!responses["APP_UNINSTALLED"].success) {
+          logger.info(
+            `Failed to register APP_UNINSTALLED webhook: ${responses.result}`
           );
         }
 
