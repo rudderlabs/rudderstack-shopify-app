@@ -85,20 +85,11 @@ app.prepare().then(async () => {
       async afterAuth(ctx) {
         // Access token and shop available in ctx.state.shopify
         // const { shop, accessToken, scope } = ctx.state.shopify;
-        logger.info("SESSION ", ctx.session);
+        logger.info("Shopify Auth")
         const { shop, accessToken, scope } = ctx.state.shopify;
         const host = ctx.query.host;
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
-        // logger.info(`The token is ${accessToken}`);
-        // logger.info("inside Shopify afterAuth");
-
-        // ctx.cookies.set("shopOrigin", shop, {
-        //   httpOnly: false,
-        //   secure: true,
-        //   sameSite: "none",
-        // });
-
-
+        
         try {
           const currentShopInfo = await dbUtils.getDataByShop(shop);
           if (currentShopInfo) {
@@ -121,25 +112,6 @@ app.prepare().then(async () => {
           logger.error(`error while querying DB: ${err}`);
         }
 
-        // const response = await Shopify.Webhooks.Registry.register({
-        //   shop,
-        //   accessToken,
-        //   path: `/webhooks?shop=${shop}`,
-        //   topic: "APP_UNINSTALLED",
-        //   webhookHandler: async (topic, shop, body) => {
-        //     delete ACTIVE_SHOPIFY_SHOPS[shop];
-        //     logger.info("this should be called on uninstall");
-        //     // verifyAndDelete(shop);
-        //   },
-        // });
-
-        // logger.info(`RESPONSE: ${JSON.stringify(response)}`);
-
-        // if (!response.success) {
-        //   logger.error(
-        //     `Failed to register APP_UNINSTALLED webhook: ${response.result}`
-        //   );
-        // }
         const responses = await Shopify.Webhooks.Registry.register({
           shop,
           accessToken,

@@ -193,8 +193,8 @@ export const registerWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
     throw new Error("script tag register failed");
   }
   
-  logger.info(`Registered webhook id: ${webhooks}`);
-  logger.info(`Registered script tag: ${resp.script_tag}`);
+  logger.info("Registered webhook ids");
+  logger.info("Registered script tags");
   
   // save to DB only if both succeeds
   await dbUtils.updateShopInfo(shop, updatedInfo);
@@ -212,7 +212,6 @@ export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
     try {
       const webhookUrl = embedTopicInUrl(rudderWebhookUrl, topic);
       await updateWebhooks(webhookId, webhookUrl, shop, accessToken);
-      // updatedWebhooks.push({ webhookId: updatedId, topic });
       logger.info(`Updated webhook - ${webhookId} ${topic}`);
     } catch (err) {
       logger.error(`error while updating webhooks: ${err}`)
@@ -238,7 +237,6 @@ export const updateWebhooksAndScriptTag = async (rudderWebhookUrl, shop) => {
     config: {
       ...currentConfig,
       rudderWebhookUrl,
-      // webhooks: updatedWebhooks
     }
   };
   await dbUtils.updateShopInfo(shop, updatedInfo);
