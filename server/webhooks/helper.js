@@ -147,7 +147,10 @@ export const verifyAndDelete = async (shop) => {
       await client.get({ path: "webhooks/count" });
     } catch (err) {
       logger.error(`[verifyAndDelete] error: ${err.message}`);
-      invalidated = true;
+      if(err.message && err.message.includes("Unauthorized")){
+        logger.info("Token is invalidated.")
+        invalidated = true;
+      }
     }
 
     // check if token is invalidated
