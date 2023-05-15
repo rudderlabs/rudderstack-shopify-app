@@ -1,6 +1,6 @@
 export const topicMapping = {
  
-    carts_create: "carts/create",
+    // carts_create: "carts/create",
     carts_update: "carts/update",
 
 
