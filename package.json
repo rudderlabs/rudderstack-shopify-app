@@ -1,12 +1,16 @@
 {
   "name": "shopify-app-node",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Shopify's node app for CLI tool",
   "scripts": {
     "test": "jest",
     "dev": "cross-env NODE_ENV=development nodemon ./server/index.js --watch ./server/index.js",
     "build": "NEXT_TELEMETRY_DISABLED=1 next build",
-    "start": "cross-env NODE_ENV=production node ./server/index.js"
+    "start": "cross-env NODE_ENV=production node ./server/index.js",
+    "release": "npx standard-version",
+    "release:github": "DEBUG=conventional-github-releaser npx conventional-github-releaser -p angular --config github-release.config.js",
+    "pre-commit": "npx lint-staged",
+    "commit-msg": "commitlint --edit"
   },
   "repository": {
     "type": "git",
